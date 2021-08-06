@@ -69,7 +69,8 @@
     rollPedalingOnOff,
   } from "./stores";
   import { clamp } from "./utils";
-  import SamplePlayer from "./components/SamplePlayer.svelte";
+  //import SamplePlayer from "./components/SamplePlayer.svelte";
+  import ExpressionBox from "./components/ExpressionBox.svelte";
   import RollSelector from "./components/RollSelector.svelte";
   import RollDetails from "./components/RollDetails.svelte";
   import RollViewer from "./components/RollViewer.svelte";
@@ -167,7 +168,7 @@
   };
 
   const loadRoll = (roll) => {
-    mididataReady = fetch(`./assets/midi/${roll.druid}.mid`)
+    mididataReady = fetch(`./assets/midi/${roll.druid}_note.mid`)
       .then((mididataResponse) => {
         if (mididataResponse.status === 200)
           return mididataResponse.arrayBuffer();
@@ -300,7 +301,7 @@
     </div>
   {/if}
 </div>
-<SamplePlayer bind:this={samplePlayer} />
+<ExpressionBox bind:this={samplePlayer} />
 <KeyboardShortcuts />
 <Notification />
 
