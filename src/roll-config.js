@@ -1,3 +1,27 @@
+export const getExpressionBox = (rollType) => {
+  if (rollType === "welte-red") {
+    const expBox = {
+      welte_p: 35.0,
+      welte_mf: 65.0,
+      welte_f: 85.0,
+      welte_loud: 70.0,
+      left_adjust: -5,
+      cresc_rate: 1.0,
+      slow_decay_rate: 2380,
+      fastC_decay_rate: 300,
+      fastD_decay_rate: 400,
+    };
+    expBox.slow_step =
+      (expBox.welte_mf - expBox.welte_p) / expBox.slow_decay_rate;
+    expBox.fastC_step =
+      (expBox.welte_mf - expBox.welte_p) / expBox.fastC_decay_rate;
+    expBox.fastD_step =
+      (expBox.welte_f - expBox.welte_p) / expBox.fastD_decay_rate;
+    return expBox;
+  }
+  return null;
+};
+
 export const rollProfile = {
   "welte-red": {
     bassCtrlBegin: 14,

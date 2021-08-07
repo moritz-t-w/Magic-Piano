@@ -30,6 +30,34 @@ export const getHoleType = ({ m: midiNumber }, rollType) => {
   return "control";
 };
 
+export const getHolePan = ({ m: midiNumber }, rollType) => {
+  const holeType = getHoleType({ m: midiNumber }, rollType);
+  if (holeType === "control") {
+    if (
+      midiNumber >= rollProfile[rollType].bassCtrlBegin &&
+      midiNumber <= rollProfile[rollType].bassCtrlEnd
+    )
+      return "bass";
+    if (
+      midiNumber >= rollProfile[rollType].trebleCtrlBegin &&
+      midiNumber <= rollProfile[rollType].trebleCtrlEnd
+    )
+      return "treble";
+  } else if (holeType === "note") {
+    if (
+      midiNumber >= rollProfile[rollType].bassNotesBegin &&
+      midiNumber <= rollProfile[rollType].bassNotesEnd
+    )
+      return "bass";
+    if (
+      midiNumber >= rollProfile[rollType].trebleNotesBegin &&
+      midiNumber <= rollProfile[rollType].trebleNotesEnd
+    )
+      return "treble";
+  }
+  return null;
+};
+
 // Return a float between min and max proportional to value's position between
 // 0 and 1
 export const mapToRange = (value, min, max) => value * (max - min) + min;
