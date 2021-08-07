@@ -1,23 +1,23 @@
-export const getExpressionBox = (rollType) => {
+export const getExpressionParams = (rollType) => {
   if (rollType === "welte-red") {
-    const expBox = {
+    const expParams = {
       welte_p: 35.0,
       welte_mf: 65.0,
       welte_f: 85.0,
       welte_loud: 70.0,
       left_adjust: -5,
       cresc_rate: 1.0,
-      slow_decay_rate: 2380,
+      slow_decay_rate: 2380, // Probably this is 1 velocity step in 2.38s
       fastC_decay_rate: 300,
       fastD_decay_rate: 400,
     };
-    expBox.slow_step =
-      (expBox.welte_mf - expBox.welte_p) / expBox.slow_decay_rate;
-    expBox.fastC_step =
-      (expBox.welte_mf - expBox.welte_p) / expBox.fastC_decay_rate;
-    expBox.fastD_step =
-      (expBox.welte_f - expBox.welte_p) / expBox.fastD_decay_rate;
-    return expBox;
+    expParams.slow_step =
+      (expParams.welte_mf - expParams.welte_p) / expParams.slow_decay_rate;
+    expParams.fastC_step =
+      (expParams.welte_mf - expParams.welte_p) / expParams.fastC_decay_rate;
+    expParams.fastD_step =
+      -(expParams.welte_f - expParams.welte_p) / expParams.fastD_decay_rate;
+    return expParams;
   }
   return null;
 };

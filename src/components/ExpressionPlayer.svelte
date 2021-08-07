@@ -28,6 +28,12 @@
   let expParams;
   let expState;
 
+  const TRACKERBAR_DIAMETER = 16.7; // could derive from AVG_HOLE_WIDTH
+  const PUNCH_EXTENSION_FRACTION = 0.75;
+  const TRACKER_EXTENSION = parseInt(
+    TRACKERBAR_DIAMETER * PUNCH_EXTENSION_FRACTION,
+  );
+
   const SOFT_PEDAL = 67;
   const SUSTAIN_PEDAL = 64;
 
@@ -229,7 +235,94 @@
     return _notesMap;
   };
 
+  const getPanVelocity = (holePan) => {
+    let newVelocity = expState[holePan].velocity;
+    const msFromLastDynamic = expState.time - expState[holePan].time;
+
+    //console.log("TIME FROM LAST", holePan, "DYNAMIC CHANGE", msFromLastDynamic);
+    if (msFromLastDynamic < 0) {
+      console.log(
+        "ERROR NEGATIVE TIME FROM LAST",
+        holePan,
+        "DYNAMIC:",
+        msFromLastDynamic,
+      );
+    }
+
+    const isFastCrescOn =
+      (expState[holePan].fast_cresc_start !== null &&
+        expState[holePan].fast_cresc_stop === null) ||
+      (expState[holePan].fast_cresc_start !== null &&
+        expState[holePan].fast_cresc_stop !== null &&
+        expState[holePan].fast_cresc_stop > expState.time);
+    const isFastDecrescOn =
+      (expState[holePan].fast_decresc_start !== null &&
+        expState[holePan].fast_decresc_stop === null) ||
+      (expState[holePan].fast_decresc_start !== null &&
+        expState[holePan].fast_decresc_stop !== null &&
+        expState[holePan].fast_decresc_stop > expState.time);
+
+    if (
+      expState[holePan].slow_cresc_start === null &&
+      !isFastCrescOn &&
+      !isFastDecrescOn
+    ) {
+      if (expState[holePan].slow_descresc_start === null) {
+        // console.log(
+        //   "WARNING: slow decresc not on by default at",
+        //   expState.tick,
+        // );
+      }
+      newVelocity -= msFromLastDynamic * expParams.slow_step;
+    } else {
+      newVelocity +=
+        expState[holePan].slow_cresc_start !== null
+          ? msFromLastDynamic * expParams.slow_step
+          : 0;
+      newVelocity += isFastCrescOn
+        ? msFromLastDynamic * expParams.fastC_step
+        : 0;
+      newVelocity += isFastDecrescOn
+        ? msFromLastDynamic * expParams.fastD_step
+        : 0;
+    }
+
+    const velocityDelta = newVelocity - expState[holePan].velocity;
+
+    if (expParams.mf_start !== null) {
+      if (expState[holePan].velocity > expParams.welte_mf) {
+        newVelocity =
+          velocityDelta < 0
+            ? Math.max(expParams.welte_mf + 0.001, newVelocity)
+            : Math.min(expParams.welte_f, newVelocity);
+      } else if (expState[holePan].velocity < expParams.welte_mf) {
+        newVelocity =
+          velocityDelta > 0
+            ? Math.min(expParams.welte_mf - 0.001, newVelocity)
+            : Math.max(expParams.welte_p, newVelocity);
+      }
+    } else {
+      if (
+        expState[holePan].slow_cresc_start !== null &&
+        !isFastCrescOn &&
+        expState[holePan].velocity < expParams.welte_loud
+      ) {
+        newVelocity = Math.min(newVelocity, expParams.welte_loud);
+      }
+    }
+
+    newVelocity = clamp(newVelocity, expParams.welte_p, expParams.welte_f);
+
+    if (holePan === "bass") {
+      newVelocity += expParams.left_adjust;
+    }
+
+    return newVelocity;
+  };
+
   midiSamplePlayer.on("fileLoaded", () => {
+    console.log("TRACKERBAR EXTENSION: ", TRACKER_EXTENSION);
+
     const decodeHtmlEntities = (string) =>
       string
         .replace(/&#(\d+);/g, (match, num) => String.fromCodePoint(num))
@@ -254,9 +347,9 @@
 
     midiTPQ = midiSamplePlayer.getDivision().division;
 
-    console.log($rollMetadata);
+    //console.log($rollMetadata);
 
-    console.log(midiSamplePlayer.tracks);
+    //console.log(midiSamplePlayer.tracks);
 
     tempoMap = buildTempoMap(metadataTrack);
 
@@ -270,22 +363,26 @@
 
     expState = {
       bass: {
-        velocity: expParams.welte_mf, // Velocity at last cresc/decresc event
-        last_time: 0,
+        velocity: expParams.welte_p, // Velocity at last cresc/decresc event
+        time: 0, // Time (in ms) at last cresc/decresc event
         mf_start: null,
         slow_cresc_start: null,
         slow_descresc_start: null,
         fast_cresc_start: null,
+        fast_cresc_stop: null, // Can be in the future due to tracker extension
         fast_decresc_start: null,
+        fast_decresc_stop: null,
       },
       treble: {
-        velocity: expParams.welte_mf,
-        last_time: 0,
+        velocity: expParams.welte_p,
+        time: 0,
         mf_start: null,
         slow_cresc_start: null,
         slow_descresc_start: null,
         fast_cresc_start: null,
+        fast_cresc_stop: null,
         fast_decresc_start: null,
+        fast_decresc_stop: null,
       },
       tempo: DEFAULT_TEMPO,
       tick: 0,
@@ -315,18 +412,33 @@
     const ticksPerSecond = (parseFloat(expState.tempo) * midiTPQ) / 60.0;
     expState.time += (parseFloat(tick - expState.tick) / ticksPerSecond) * 1000;
     expState.tick = tick;
+    const trackerExtensionSeconds = TRACKER_EXTENSION / ticksPerSecond;
 
     if (msgType === "Note on") {
       const holeType = getHoleType({ m: midiNumber }, $rollMetadata.ROLL_TYPE);
       if (holeType === "note") {
         if (velocity === 0) {
-          stopNote(midiNumber);
+          // At 591 TPQ & 60bpm, this is ~.02s, notable decrease due to accel
+          const extraTime = `+${trackerExtensionSeconds}`;
+
+          // XXX Need to apply trackerbar length correction
+          stopNote(midiNumber, extraTime);
           activeNotes.delete(midiNumber);
         } else {
           const notePan = getHolePan(
             { m: midiNumber },
             $rollMetadata.ROLL_TYPE,
           );
+
+          // console.log(
+          //   "PREVIOUS",
+          //   notePan,
+          //   "velocity",
+          //   expState[notePan].velocity,
+          // );
+
+          let velocity = getPanVelocity(notePan);
+
           console.log(
             "NOTE ON",
             noteName,
@@ -336,70 +448,13 @@
             "TIME",
             //getMillisecondsAtTick(tick),
             expState.time,
+            "PAN",
+            notePan,
+            "VELOCITY",
+            velocity,
           );
 
-          let newVelocity = expState[notePan].velocity;
-          const msFromLastDynamic = expState.time - expState[notePan].time;
-
-          if (
-            expState[notePan].slow_cresc_start === null &&
-            expState[notePan].fast_cresc_start === null &&
-            expState[notePan].fast_decresc_start === null
-          ) {
-            if (expState[notePan].slow_descresc_start === null) {
-              console.log("NOTE: slow decresc not on by default at", tick);
-            }
-            newVelocity -= msFromLastDynamic * expParams.slow_step;
-          } else {
-            newVelocity +=
-              expState[notePan].slow_cresc_start !== null
-                ? msFromLastDynamic * expParams.slow_step
-                : 0;
-            newVelocity +=
-              expState[notePan].fast_cresc_start !== null
-                ? msFromLastDynamic * expParams.fastC_step
-                : 0;
-            newVelocity +=
-              expState[notePan].fast_decresc_start !== null
-                ? msFromLastDynamic * expParams.fastD_step
-                : 0;
-          }
-
-          const velocityDelta = newVelocity - expState[notePan].velocity;
-
-          if (expParams.mf_start !== null) {
-            if (expState[notePan].velocity > expParams.welte_mf) {
-              newVelocity =
-                velocityDelta < 0
-                  ? Math.max(expParams.welte_mf)
-                  : Math.min(expParams, welte_f);
-            } else if (expState[notePan].velocity < expParams.welte_mf) {
-              newVelocity =
-                velocityDelta > 0
-                  ? Math.min(expParams.welte_mf, newVelocity)
-                  : Math.max(expParams.welte_p, new_velocity);
-            }
-          } else {
-            if (
-              expState[notePan].slow_cresc_start !== null &&
-              expState[notePan].fast_cresc_start === null &&
-              expState[notePan].velocity < expParams.welte_loud
-            ) {
-              newVelocity = Math.min(newVelocity, expParams.welte_loud);
-            }
-          }
-
-          newVelocity = clamp(
-            newVelocity,
-            expParams.welte_p,
-            expParams.welte_f,
-          );
-
-          if (notePan === "bass") {
-            newVelocity += expParams.left_adjust;
-          }
-
-          startNote(midiNumber, newVelocity);
+          startNote(midiNumber, velocity);
           activeNotes.add(midiNumber);
         }
       } else if (holeType === "pedal" && $rollPedalingOnOff) {
@@ -429,10 +484,10 @@
         }
       } else if (holeType === "control" && $playExpressionsOnOff) {
         const holePan = getHolePan({ m: midiNumber }, $rollMetadata.ROLL_TYPE);
+        const panVelocity = getPanVelocity(holePan);
         const ctrlFunc =
           rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber];
-        console.log(ctrlFunc, holePan, velocity);
-        expState[holePan].time = expState.time;
+
         if (ctrlFunc === "mf_on" && velocity > 0) {
           expState[holePan].mf_start = expState.time;
         } else if (ctrlFunc === "mf_off" && velocity > 0) {
@@ -446,15 +501,29 @@
         } else if (ctrlFunc === "sf_on") {
           if (velocity > 0) {
             expState[holePan].fast_cresc_start = expState.time;
+            expState[holePan].fast_cresc_stop = null;
           } else {
-            expState[holePan].fast_cresc_start = null;
+            // XXX Need to apply trackerbar length correction
+            //expState[holePan].fast_cresc_start = null;
+            expState[holePan].fast_cresc_stop =
+              expState.time + trackerExtensionSeconds / 1000.0;
           }
         } else if (ctrlFunc === "sf_off") {
           if (velocity > 0) {
             expState[holePan].fast_decresc_start = expState.time;
+            expState[holePan].fast_decresc_stop = null;
           } else {
-            expState[holePan].fast_decresc_start = null;
+            // XXX Need to apply trackerbar length correction
+            //expState[holePan].fast_decresc_start = null;
+            expState[holePan].fast_decresc_stop =
+              expState.time + trackerExtensionSeconds / 1000.0;
           }
+        }
+        if (velocity > 0 || ["sf_on", "sf_off"].includes(ctrlFunc)) {
+          // Only update the previous pan velocity when a meaningful change to
+          // the expression valve state has occurred?
+          expState[holePan].velocity = panVelocity;
+          expState[holePan].time = expState.time;
         }
       }
     } else if (msgType === "Set Tempo" && $useMidiTempoEventsOnOff) {

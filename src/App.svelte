@@ -70,7 +70,7 @@
   } from "./stores";
   import { clamp } from "./utils";
   //import SamplePlayer from "./components/SamplePlayer.svelte";
-  import ExpressionBox from "./components/ExpressionBox.svelte";
+  import ExpressionPlayer from "./components/ExpressionPlayer.svelte";
   import RollSelector from "./components/RollSelector.svelte";
   import RollDetails from "./components/RollDetails.svelte";
   import RollViewer from "./components/RollViewer.svelte";
@@ -301,7 +301,7 @@
     </div>
   {/if}
 </div>
-<ExpressionBox bind:this={samplePlayer} />
+<ExpressionPlayer bind:this={samplePlayer} />
 <KeyboardShortcuts />
 <Notification />
 

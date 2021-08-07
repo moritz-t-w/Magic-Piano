@@ -19,6 +19,8 @@
     currentTick,
   } from "../stores";
 
+  import { rollProfile } from "../roll-config";
+
   let tempoMap;
   let pedalingMap;
   let notesMap;
@@ -29,7 +31,6 @@
   const DEFAULT_NOTE_VELOCITY = 50.0;
   const DEFAULT_TEMPO = 60;
   const SOFT_PEDAL_RATIO = 0.67;
-  const HALF_BOUNDARY = 66; // F# above Middle C; divides the keyboard into two "pans"
   const ACCENT_BUMP = 1.5;
 
   const midiSamplePlayer = new MidiPlayer.Player();
@@ -100,7 +101,7 @@
       (($softOnOff && SOFT_PEDAL_RATIO) || 1) *
       (($accentOnOff && ACCENT_BUMP) || 1) *
       $volumeCoefficient *
-      (noteNumber < HALF_BOUNDARY
+      (noteNumber <= rollProfile[$rollMetadata.ROLL_TYPE].bassNotesEnd
         ? $bassVolumeCoefficient
         : $trebleVolumeCoefficient);
     if (modifiedVelocity) {
