@@ -252,6 +252,19 @@
         expState[holePan].fast_decresc_stop !== null &&
         expState[holePan].fast_decresc_stop > expState.time);
 
+    const isFastCrescOn =
+      (expState[holePan].fast_cresc_start !== null &&
+        expState[holePan].fast_cresc_stop === null) ||
+      (expState[holePan].fast_cresc_start !== null &&
+        expState[holePan].fast_cresc_stop !== null &&
+        expState[holePan].fast_cresc_stop > expState.time);
+    const isFastDecrescOn =
+      (expState[holePan].fast_decresc_start !== null &&
+        expState[holePan].fast_decresc_stop === null) ||
+      (expState[holePan].fast_decresc_start !== null &&
+        expState[holePan].fast_decresc_stop !== null &&
+        expState[holePan].fast_decresc_stop > expState.time);
+
     if (
       expState[holePan].slow_cresc_start === null &&
       !isFastCrescOn &&
@@ -301,6 +314,8 @@
   };
 
   midiSamplePlayer.on("fileLoaded", () => {
+    console.log("TRACKERBAR EXTENSION: ", TRACKER_EXTENSION);
+
     const decodeHtmlEntities = (string) =>
       string
         .replace(/&#(\d+);/g, (match, num) => String.fromCodePoint(num))
