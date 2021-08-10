@@ -239,16 +239,6 @@
     let newVelocity = expState[holePan].velocity;
     const msFromLastDynamic = expState.time - expState[holePan].time;
 
-    //console.log("TIME FROM LAST", holePan, "DYNAMIC CHANGE", msFromLastDynamic);
-    if (msFromLastDynamic < 0) {
-      console.log(
-        "ERROR NEGATIVE TIME FROM LAST",
-        holePan,
-        "DYNAMIC:",
-        msFromLastDynamic,
-      );
-    }
-
     const isFastCrescOn =
       (expState[holePan].fast_cresc_start !== null &&
         expState[holePan].fast_cresc_stop === null) ||
@@ -267,12 +257,6 @@
       !isFastCrescOn &&
       !isFastDecrescOn
     ) {
-      if (expState[holePan].slow_descresc_start === null) {
-        // console.log(
-        //   "WARNING: slow decresc not on by default at",
-        //   expState.tick,
-        // );
-      }
       newVelocity -= msFromLastDynamic * expParams.slow_step;
     } else {
       newVelocity +=
@@ -289,7 +273,7 @@
 
     const velocityDelta = newVelocity - expState[holePan].velocity;
 
-    if (expParams.mf_start !== null) {
+    if (expState[holePan].mf_start !== null) {
       if (expState[holePan].velocity > expParams.welte_mf) {
         newVelocity =
           velocityDelta < 0
@@ -307,22 +291,16 @@
         !isFastCrescOn &&
         expState[holePan].velocity < expParams.welte_loud
       ) {
-        newVelocity = Math.min(newVelocity, expParams.welte_loud);
+        newVelocity = Math.min(newVelocity, expParams.welte_loud - 0.001);
       }
     }
 
     newVelocity = clamp(newVelocity, expParams.welte_p, expParams.welte_f);
 
-    if (holePan === "bass") {
-      newVelocity += expParams.left_adjust;
-    }
-
     return newVelocity;
   };
 
   midiSamplePlayer.on("fileLoaded", () => {
-    console.log("TRACKERBAR EXTENSION: ", TRACKER_EXTENSION);
-
     const decodeHtmlEntities = (string) =>
       string
         .replace(/&#(\d+);/g, (match, num) => String.fromCodePoint(num))
@@ -367,7 +345,7 @@
         time: 0, // Time (in ms) at last cresc/decresc event
         mf_start: null,
         slow_cresc_start: null,
-        slow_descresc_start: null,
+        slow_decresc_start: null,
         fast_cresc_start: null,
         fast_cresc_stop: null, // Can be in the future due to tracker extension
         fast_decresc_start: null,
@@ -378,7 +356,7 @@
         time: 0,
         mf_start: null,
         slow_cresc_start: null,
-        slow_descresc_start: null,
+        slow_decresc_start: null,
         fast_cresc_start: null,
         fast_cresc_stop: null,
         fast_decresc_start: null,
@@ -394,11 +372,9 @@
     if (tick <= midiSamplePlayer.totalTicks) currentTick.set(tick);
   });
 
-  midiSamplePlayer.on("midiEvent", (
-    /*{ name, value, number, noteNumber, velocity, data, tick }*/ e,
-  ) => {
-    //console.log(e);
-    const {
+  midiSamplePlayer.on(
+    "midiEvent",
+    ({
       name: msgType,
       noteNumber: midiNumber,
       velocity,
@@ -407,138 +383,125 @@
       value: ctrlrVal,
       number: ctrlrNumber,
       noteName,
-    } = e;
+    }) => {
+      const ticksPerSecond = (parseFloat(expState.tempo) * midiTPQ) / 60.0;
+      expState.time +=
+        (parseFloat(tick - expState.tick) / ticksPerSecond) * 1000;
+      expState.tick = tick;
+      const trackerExtensionSeconds = TRACKER_EXTENSION / ticksPerSecond;
 
-    const ticksPerSecond = (parseFloat(expState.tempo) * midiTPQ) / 60.0;
-    expState.time += (parseFloat(tick - expState.tick) / ticksPerSecond) * 1000;
-    expState.tick = tick;
-    const trackerExtensionSeconds = TRACKER_EXTENSION / ticksPerSecond;
+      if (msgType === "Note on") {
+        const holeType = getHoleType(
+          { m: midiNumber },
+          $rollMetadata.ROLL_TYPE,
+        );
+        if (holeType === "note") {
+          if (velocity === 0) {
+            // At 591 TPQ & 60bpm, this is ~.02s, drops slowly due to accel
+            const extraTime = `+${trackerExtensionSeconds}`;
 
-    if (msgType === "Note on") {
-      const holeType = getHoleType({ m: midiNumber }, $rollMetadata.ROLL_TYPE);
-      if (holeType === "note") {
-        if (velocity === 0) {
-          // At 591 TPQ & 60bpm, this is ~.02s, notable decrease due to accel
-          const extraTime = `+${trackerExtensionSeconds}`;
+            stopNote(midiNumber, extraTime);
+            activeNotes.delete(midiNumber);
+          } else {
+            const notePan = getHolePan(
+              { m: midiNumber },
+              $rollMetadata.ROLL_TYPE,
+            );
 
-          // XXX Need to apply trackerbar length correction
-          stopNote(midiNumber, extraTime);
-          activeNotes.delete(midiNumber);
-        } else {
-          const notePan = getHolePan(
+            let velocity = getPanVelocity(notePan);
+
+            if (notePan == "bass") {
+              velocity += expParams.left_adjust;
+            }
+
+            startNote(midiNumber, velocity);
+            activeNotes.add(midiNumber);
+          }
+        } else if (holeType === "pedal" && $rollPedalingOnOff) {
+          if (velocity === 0) {
+            // Length of pedal control holes doesn't matter for red Welte
+            // (but it does for green Welte...)
+            return;
+          }
+          if (
+            rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber] ===
+            "sust_on"
+          ) {
+            sustainOnOff.set(true);
+          } else if (
+            rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber] ===
+            "sust_off"
+          ) {
+            sustainOnOff.set(false);
+          } else if (
+            rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber] ===
+            "soft_on"
+          ) {
+            softOnOff.set(true);
+          } else if (
+            rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber] ===
+            "soft_off"
+          ) {
+            softOnOff.set(false);
+          }
+        } else if (holeType === "control" && $playExpressionsOnOff) {
+          const ctrlFunc =
+            rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber];
+
+          if (velocity === 0 && !["sf_on", "sf_off"].includes(ctrlFunc)) {
+            return;
+          }
+
+          const holePan = getHolePan(
             { m: midiNumber },
             $rollMetadata.ROLL_TYPE,
           );
+          const panVelocity = getPanVelocity(holePan);
 
-          // console.log(
-          //   "PREVIOUS",
-          //   notePan,
-          //   "velocity",
-          //   expState[notePan].velocity,
-          // );
-
-          let velocity = getPanVelocity(notePan);
-
-          console.log(
-            "NOTE ON",
-            noteName,
-            midiNumber,
-            "AT TICK",
-            tick,
-            "TIME",
-            //getMillisecondsAtTick(tick),
-            expState.time,
-            "PAN",
-            notePan,
-            "VELOCITY",
-            velocity,
-          );
-
-          startNote(midiNumber, velocity);
-          activeNotes.add(midiNumber);
-        }
-      } else if (holeType === "pedal" && $rollPedalingOnOff) {
-        if (velocity === 0) {
-          // Length of pedal control holes doesn't matter for red Welte
-          // (but it does for green Welte...)
-          return;
-        }
-        if (
-          rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber] === "sust_on"
-        ) {
-          sustainOnOff.set(true);
-        } else if (
-          rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber] ===
-          "sust_off"
-        ) {
-          sustainOnOff.set(false);
-        } else if (
-          rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber] === "soft_on"
-        ) {
-          softOnOff.set(true);
-        } else if (
-          rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber] ===
-          "soft_off"
-        ) {
-          softOnOff.set(false);
-        }
-      } else if (holeType === "control" && $playExpressionsOnOff) {
-        const holePan = getHolePan({ m: midiNumber }, $rollMetadata.ROLL_TYPE);
-        const panVelocity = getPanVelocity(holePan);
-        const ctrlFunc =
-          rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber];
-
-        if (ctrlFunc === "mf_on" && velocity > 0) {
-          expState[holePan].mf_start = expState.time;
-        } else if (ctrlFunc === "mf_off" && velocity > 0) {
-          expState[holePan].mf_start = null;
-        } else if (ctrlFunc === "cresc_on" && velocity > 0) {
-          expState[holePan].slow_cresc_start = expState.time;
-          expState[holePan].slow_decresc_start = null;
-        } else if (ctrlFunc === "cresc_off" && velocity > 0) {
-          expState[holePan].slow_cresc_start = null;
-          expState[holePan].slow_decresc_start = expState.time;
-        } else if (ctrlFunc === "sf_on") {
-          if (velocity > 0) {
-            expState[holePan].fast_cresc_start = expState.time;
-            expState[holePan].fast_cresc_stop = null;
-          } else {
-            // XXX Need to apply trackerbar length correction
-            //expState[holePan].fast_cresc_start = null;
-            expState[holePan].fast_cresc_stop =
-              expState.time + trackerExtensionSeconds / 1000.0;
+          if (ctrlFunc === "mf_on" && velocity > 0) {
+            expState[holePan].mf_start = expState.time;
+          } else if (ctrlFunc === "mf_off" && velocity > 0) {
+            expState[holePan].mf_start = null;
+          } else if (ctrlFunc === "cresc_on" && velocity > 0) {
+            expState[holePan].slow_cresc_start = expState.time;
+            expState[holePan].slow_decresc_start = null;
+          } else if (ctrlFunc === "cresc_off" && velocity > 0) {
+            expState[holePan].slow_cresc_start = null;
+            expState[holePan].slow_decresc_start = expState.time;
+          } else if (ctrlFunc === "sf_on") {
+            if (velocity > 0) {
+              expState[holePan].fast_cresc_start = expState.time;
+              expState[holePan].fast_cresc_stop = null;
+            } else {
+              expState[holePan].fast_cresc_stop =
+                expState.time + trackerExtensionSeconds * 1000.0;
+            }
+          } else if (ctrlFunc === "sf_off") {
+            if (velocity > 0) {
+              expState[holePan].fast_decresc_start = expState.time;
+              expState[holePan].fast_decresc_stop = null;
+            } else {
+              expState[holePan].fast_decresc_stop =
+                expState.time + trackerExtensionSeconds * 1000.0;
+            }
           }
-        } else if (ctrlFunc === "sf_off") {
-          if (velocity > 0) {
-            expState[holePan].fast_decresc_start = expState.time;
-            expState[holePan].fast_decresc_stop = null;
-          } else {
-            // XXX Need to apply trackerbar length correction
-            //expState[holePan].fast_decresc_start = null;
-            expState[holePan].fast_decresc_stop =
-              expState.time + trackerExtensionSeconds / 1000.0;
-          }
-        }
-        if (velocity > 0 || ["sf_on", "sf_off"].includes(ctrlFunc)) {
-          // Only update the previous pan velocity when a meaningful change to
-          // the expression valve state has occurred?
           expState[holePan].velocity = panVelocity;
           expState[holePan].time = expState.time;
         }
+      } else if (msgType === "Set Tempo" && $useMidiTempoEventsOnOff) {
+        const newTempo = data * $tempoCoefficient;
+        midiSamplePlayer.setTempo(newTempo);
+        expState.tempo = newTempo;
+      } else if (msgType === "Controller Change" && $rollPedalingOnOff) {
+        // This shouldn't happen with note MIDI input
+        if (ctrlrNumber === SUSTAIN_PEDAL) {
+          sustainOnOff.set(!!ctrlrVal);
+        } else if (ctrlrNumber === SOFT_PEDAL) {
+          softOnOff.set(!!ctrlrVal);
+        }
       }
-    } else if (msgType === "Set Tempo" && $useMidiTempoEventsOnOff) {
-      const newTempo = data * $tempoCoefficient;
-      midiSamplePlayer.setTempo(newTempo);
-      expState.tempo = newTempo;
-    } else if (msgType === "Controller Change" && $rollPedalingOnOff) {
-      // This shouldn't happen with note MIDI input
-      if (ctrlrNumber === SUSTAIN_PEDAL) {
-        sustainOnOff.set(!!ctrlrVal);
-      } else if (ctrlrNumber === SOFT_PEDAL) {
-        softOnOff.set(!!ctrlrVal);
-      }
-    }
-  });
+    },
+  );
 
   midiSamplePlayer.on("endOfFile", pausePlayback);
 

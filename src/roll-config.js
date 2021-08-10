@@ -2,9 +2,9 @@ export const getExpressionParams = (rollType) => {
   if (rollType === "welte-red") {
     const expParams = {
       welte_p: 35.0,
-      welte_mf: 65.0,
-      welte_f: 85.0,
-      welte_loud: 70.0,
+      welte_mf: 60.0,
+      welte_f: 90.0,
+      welte_loud: 75.0,
       left_adjust: -5,
       cresc_rate: 1.0,
       slow_decay_rate: 2380, // Probably this is 1 velocity step in 2.38s
