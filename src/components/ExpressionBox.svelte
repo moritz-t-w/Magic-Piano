@@ -37,22 +37,10 @@
     TRACKERBAR_DIAMETER * PUNCH_EXTENSION_FRACTION,
   );
 
-  const SOFT_PEDAL_ON = getKeyByValue(
-    rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap,
-    "soft_on",
-  );
-  const SOFT_PEDAL_FF = getKeyByValue(
-    rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap,
-    "soft_off",
-  );
-  const SUSTAIN_PEDAL_ON = getKeyByValue(
-    rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap,
-    "sust_on",
-  );
-  const SUSTAIN_PEDAL_OFF = getKeyByValue(
-    rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap,
-    "sust_off",
-  );
+  let SOFT_PEDAL_ON;
+  let SOFT_PEDAL_OFF;
+  let SUSTAIN_PEDAL_ON;
+  let SUSTAIN_PEDAL_OFF;
 
   const DEFAULT_NOTE_VELOCITY = 50.0;
   const DEFAULT_TEMPO = 60;
@@ -167,7 +155,7 @@
     midiSamplePlayer.play();
   };
 
-  // XXX Eventually this should be computed in-app from acceleration algorithm
+  // XXX Eventually this should be computed via the acceleration algorithm
   const buildTempoMap = (metadataTrack) =>
     metadataTrack
       .filter((event) => event.name === "Set Tempo")
@@ -178,21 +166,21 @@
       }, []);
 
   // Get pedal events from track 0 (bass control = soft pedal) and
-  // track 1 (treble control = sustain)
+  // track 1 (treble control = sustain pedal)
   const buildPedalingMap = (musicTracks) => {
     const _pedalingMap = new IntervalTree();
 
     const registerPedalEvents = (track, pedal_on, pedal_off) => {
       let tickOn = false;
-      track.events
+      track
         // Only want beginning of note holes for lock & cancel type expression
         // mechanisms (works for Welte red and Licensee, not 88 or Welte green)
         .filter(({ name, velocity }) => name === "Note on" && velocity === 1)
         .forEach(({ noteNumber, tick }) => {
-          if (noteNumber === pedal_on) {
+          if (noteNumber === pedal_off) {
             if (tickOn) _pedalingMap.insert(tickOn, tick, pedal_on);
             tickOn = false;
-          } else if (noteNumber === pedal_off) {
+          } else if (noteNumber === pedal_on) {
             if (!tickOn) tickOn = tick;
           }
         });
@@ -209,7 +197,7 @@
 
     const registerNoteEvents = (track) => {
       const tickOn = {};
-      track.events
+      track
         // The beginning of a note has velocity=1, end is velocty=0
         .filter(
           ({ name, noteNumber }) =>
@@ -299,11 +287,14 @@
 
   const buildExpressionMap = (musicTracks) => {
     const expParams = getExpressionParams($rollMetadata.ROLL_TYPE);
+    //console.log(expParams);
 
     const buildPanExpMap = (trackMsgs, adjust) => {
       const panExpressionMap = new IntervalTree();
       const expState = getExpressionStateBox($rollMetadata.ROLL_TYPE);
       expState.velocity = expParams.welte_p;
+
+      //console.log(expState);
 
       trackMsgs.forEach(
         ({ name: msgType, noteNumber: midiNumber, velocity, tick }) => {
@@ -366,17 +357,15 @@
           }
         },
       );
-      return expressionMap;
+      return panExpressionMap;
     };
     return {
       bass: buildPanExpMap(musicTracks[2], expParams.left_adjust),
-      treble: buildPanExpMap(musicTracks[3]),
+      treble: buildPanExpMap(musicTracks[3], 0),
     };
   };
 
   midiSamplePlayer.on("fileLoaded", () => {
-    console.log("TRACKERBAR EXTENSION: ", TRACKER_EXTENSION);
-
     const decodeHtmlEntities = (string) =>
       string
         .replace(/&#(\d+);/g, (match, num) => String.fromCodePoint(num))
@@ -399,6 +388,23 @@
       ),
     );
 
+    SOFT_PEDAL_ON = getKeyByValue(
+      rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap,
+      "soft_on",
+    );
+    SOFT_PEDAL_OFF = getKeyByValue(
+      rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap,
+      "soft_off",
+    );
+    SUSTAIN_PEDAL_ON = getKeyByValue(
+      rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap,
+      "sust_on",
+    );
+    SUSTAIN_PEDAL_OFF = getKeyByValue(
+      rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap,
+      "sust_off",
+    );
+
     midiTPQ = midiSamplePlayer.getDivision().division;
 
     //console.log($rollMetadata);
@@ -414,6 +420,8 @@
     console.log(midiSamplePlayer.events);
 
     expressionMap = buildExpressionMap(musicTracks);
+
+    //console.log(expressionMap);
   });
 
   midiSamplePlayer.on("playing", ({ tick }) => {
@@ -428,8 +436,6 @@
       velocity,
       data,
       tick,
-      value: ctrlrVal,
-      number: ctrlrNumber,
       noteName,
     }) => {
       if (msgType === "Note on") {
@@ -440,6 +446,9 @@
         if (holeType === "note") {
           if (velocity === 0) {
             // At 591 TPQ & 60bpm, this is ~.02s, drops slowly due to accel
+            const ticksPerSecond =
+              (parseFloat(getTempoAtTick(tick)) * midiTPQ) / 60.0;
+            const trackerExtensionSeconds = TRACKER_EXTENSION / ticksPerSecond;
             stopNote(midiNumber, `+${trackerExtensionSeconds}`);
             activeNotes.delete(midiNumber);
           } else {
@@ -448,12 +457,13 @@
               $rollMetadata.ROLL_TYPE,
             );
 
-            startNote(
-              midiNumber,
-              $playExpressionsOnOff
-                ? expressionMap[notePan].search(tick, tick)[0]
-                : DEFAULT_NOTE_VELOCITY,
-            );
+            const noteVelocity = $playExpressionsOnOff
+              ? expressionMap[notePan].search(tick, tick)[0]
+              : DEFAULT_NOTE_VELOCITY;
+
+            console.log(midiNumber, noteName, tick, notePan, noteVelocity);
+
+            startNote(midiNumber, noteVelocity);
             activeNotes.add(midiNumber);
           }
         } else if (holeType === "pedal" && $rollPedalingOnOff) {

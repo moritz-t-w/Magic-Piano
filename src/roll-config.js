@@ -6,7 +6,7 @@ export const getExpressionParams = (rollType) => {
       welte_mf: 60.0,
       welte_f: 90.0,
       welte_loud: 75.0,
-      left_adjust: -5,
+      left_adjust: -5.0,
       cresc_rate: 1.0,
       slow_decay_rate: 2380, // Probably this is 1 velocity step in 2.38s
       fastC_decay_rate: 300,
