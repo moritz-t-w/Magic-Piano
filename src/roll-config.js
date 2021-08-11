@@ -1,6 +1,7 @@
 export const getExpressionParams = (rollType) => {
+  let expParams = null;
   if (rollType === "welte-red") {
-    const expParams = {
+    expParams = {
       welte_p: 35.0,
       welte_mf: 60.0,
       welte_f: 90.0,
@@ -19,7 +20,27 @@ export const getExpressionParams = (rollType) => {
       -(expParams.welte_f - expParams.welte_p) / expParams.fastD_decay_rate;
     return expParams;
   }
-  return null;
+  return expParams;
+};
+
+export const getExpressionStateBox = (rollType) => {
+  let expState = null;
+  if (rollType === "welte-red") {
+    expState = {
+      velocity: 0, // Velocity at last cresc/decresc event
+      time: 0, // Time (in ms) at last cresc/decresc event
+      mf_start: null,
+      slow_cresc_start: null,
+      slow_decresc_start: null,
+      fast_cresc_start: null,
+      fast_cresc_stop: null, // Can be in the future due to tracker extension
+      fast_decresc_start: null,
+      fast_decresc_stop: null,
+      tempo: null,
+      tick: 0,
+    };
+  }
+  return expState;
 };
 
 export const rollProfile = {
