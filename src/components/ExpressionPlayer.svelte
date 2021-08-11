@@ -29,7 +29,9 @@
   let tempoMap;
   let pedalingMap;
   let notesMap;
+  let expParams;
   let expressionMap;
+  let expState;
 
   const TRACKERBAR_DIAMETER = 16.7; // try AVG_HOLE_WIDTH instead?
   const PUNCH_EXTENSION_FRACTION = 0.75;
