@@ -345,9 +345,9 @@
 
     console.log(midiSamplePlayer.events);
 
-    expressionMap = buildExpressionMap(musicTracks);
-
     expParams = getExpressionParams($rollMetadata.ROLL_TYPE);
+
+    expressionMap = buildExpressionMap(musicTracks);
 
     expState = {
       bass: {
