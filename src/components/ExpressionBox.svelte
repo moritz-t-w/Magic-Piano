@@ -206,10 +206,16 @@
 
   const buildNotesMap = (musicTracks) => {
     const _notesMap = new IntervalTree();
-    musicTracks.forEach((track) => {
+
+    const registerNoteEvents = (track) => {
       const tickOn = {};
-      track
-        .filter((event) => event.name === "Note on")
+      track.events
+        // The beginning of a note has velocity=1, end is velocty=0
+        .filter(
+          ({ name, noteNumber }) =>
+            name === "Note on" &&
+            getHoleType(noteNumber, $rollMetadata.ROLL_TYPE) === "note",
+        )
         .forEach(({ noteNumber, velocity, tick }) => {
           if (velocity === 0) {
             if (noteNumber in tickOn) {
@@ -218,7 +224,11 @@
             }
           } else if (!(noteNumber in tickOn)) tickOn[noteNumber] = tick;
         });
-    });
+    };
+
+    registerNoteEvents(musicTracks[2]);
+    registerNoteEvents(musicTracks[3]);
+
     return _notesMap;
   };
 

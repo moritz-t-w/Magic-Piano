@@ -1,5 +1,9 @@
 import { rollProfile } from "./roll-config";
 
+export const getKeyByValue = (object, value) => {
+  Object.keys(object).find((key) => object[key] === value);
+};
+
 export const enforcePrecision = (value, precision) => {
   const multiplier = 10 ** (precision || 0);
   return Math.round(value * multiplier) / multiplier;
