@@ -30,10 +30,8 @@
   let pedalingMap;
   let notesMap;
   let expressionMap;
-  let expParams;
-  let expState;
 
-  const TRACKERBAR_DIAMETER = 16.7; // could derive from AVG_HOLE_WIDTH
+  const TRACKERBAR_DIAMETER = 16.7; // try AVG_HOLE_WIDTH instead?
   const PUNCH_EXTENSION_FRACTION = 0.75;
   const TRACKER_EXTENSION = parseInt(
     TRACKERBAR_DIAMETER * PUNCH_EXTENSION_FRACTION,
