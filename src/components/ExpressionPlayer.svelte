@@ -305,8 +305,6 @@
   };
 
   midiSamplePlayer.on("fileLoaded", () => {
-    console.log("TRACKERBAR EXTENSION: ", TRACKER_EXTENSION);
-
     const decodeHtmlEntities = (string) =>
       string
         .replace(/&#(\d+);/g, (match, num) => String.fromCodePoint(num))
