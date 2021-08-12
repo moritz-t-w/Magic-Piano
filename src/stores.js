@@ -42,6 +42,8 @@ export const softOnOff = createStore(false);
 export const sustainOnOff = createStore(false);
 export const accentOnOff = createStore(false);
 
+export const noteVelocities = createStore({});
+
 // Playback Settings
 export const volumeCoefficient = createStore(1.5);
 export const bassVolumeCoefficient = createStore(1);
@@ -53,7 +55,6 @@ export const playExpressionsOnOff = createStore(true);
 export const rollPedalingOnOff = createStore(true);
 export const useMidiTempoEventsOnOff = createStore(true);
 
-//
 export const activeShortcutKeys = createStore({
   volumeUp: false,
   volumeDown: false,

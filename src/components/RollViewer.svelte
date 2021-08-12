@@ -87,6 +87,7 @@
     playExpressionsOnOff,
     rollPedalingOnOff,
     playbackProgress,
+    noteVelocities,
   } from "../stores";
   import {
     clamp,
@@ -143,13 +144,39 @@
   let avgHoleWidth;
   let trackerbarHeight;
 
-  const calculateHoleColors = (holeData) => {
-    const velocities = holeData.map(({ v }) => v).filter((v) => v);
-    const minNoteVelocity = velocities.length ? Math.min(...velocities) : 64;
-    const maxNoteVelocity = velocities.length ? Math.max(...velocities) : 64;
+  const calculateHoleColors = (holeData, noteData) => {
+    let minNoteVelocity = 64;
+    let maxNoteVelocity = 64;
 
-    const getNoteHoleColor = ({ v: velocity }) =>
-      holeColorMap[
+    if (Object.keys(noteData).length) {
+      for (let tick in noteData) {
+        for (let midiNumber in noteData[tick]) {
+          minNoteVelocity = Math.min(
+            noteData[tick][midiNumber],
+            minNoteVelocity,
+          );
+          maxNoteVelocity = Math.max(
+            noteData[tick][midiNumber],
+            maxNoteVelocity,
+          );
+        }
+      }
+      console.log(minNoteVelocity, maxNoteVelocity);
+    } else {
+      const velocities = holeData.map(({ v }) => v).filter((v) => v);
+      minNoteVelocity = Math.min(...velocities);
+      maxNoteVelocity = Math.max(...velocities);
+    }
+
+    const getNoteHoleColor = ({ v: velocity, m: midiKey, y: offsetY }) => {
+      if (
+        offsetY - firstHolePx in $noteVelocities &&
+        midiKey in $noteVelocities[offsetY]
+      ) {
+        console.log(velocity, $noteVelocities[offsetY][midiKey]);
+        velocity = $noteVelocities[offsetY][midiKey];
+      }
+      return holeColorMap[
         Math.round(
           mapToRange(
             normalizeInRange(velocity, minNoteVelocity, maxNoteVelocity),
@@ -158,6 +185,7 @@
           ),
         )
       ];
+    };
 
     holeData.forEach((hole) => {
       switch (getHoleType(hole, $rollMetadata.ROLL_TYPE)) {
@@ -172,7 +200,14 @@
           break;
 
         case "note":
+          if (
+            hole.offsetY in $noteVelocities &&
+            hole.midiKey in $noteVelocities[hole.offsetY]
+          ) {
+            hole.V = $noteVelocities[hole.offsetY][hole.midiKey];
+          }
           hole.color = getNoteHoleColor(hole);
+
           hole.type = "note";
           break;
 
@@ -181,6 +216,7 @@
       }
     });
   };
+
   let osdNavDisplayRegion;
 
   const createMark = (hole) => {
@@ -191,6 +227,7 @@
       h: height,
       m: midiKey,
       v: velocity,
+      V: inAppVelocity,
       color: holeColor,
       type: holeType,
     } = hole;
@@ -198,7 +235,9 @@
 
     const holeLabel = getHoleLabel(midiKey, $rollMetadata.ROLL_TYPE);
     mark.dataset.holeLabel = holeLabel;
-    if (holeType === "note") mark.dataset.noteVelocity = velocity || 64;
+    if (holeType === "note") {
+      mark.dataset.noteVelocity = `${velocity || "64"} ${inAppVelocity || "?"}`;
+    }
 
     mark.style.setProperty("--highlight-color", `hsl(${holeColor})`);
     mark.classList.add(holeType);
@@ -435,7 +474,7 @@
 
   $: advanceToTick($currentTick);
   $: highlightHoles($currentTick);
-  $: calculateHoleColors($rollMetadata.holeData);
+  $: calculateHoleColors($rollMetadata.holeData, $noteVelocities);
   $: scrollDownwards = $rollMetadata.ROLL_TYPE === "welte-red";
   $: imageLength = parseInt($rollMetadata.IMAGE_LENGTH, 10);
   $: imageWidth = parseInt($rollMetadata.IMAGE_WIDTH, 10);
