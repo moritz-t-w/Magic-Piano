@@ -27,8 +27,8 @@ export const getExpressionStateBox = (rollType) => {
   let expState = null;
   if (rollType === "welte-red") {
     expState = {
-      velocity: 0, // Velocity at last cresc/decresc event
-      time: 0, // Time (in ms) at last cresc/decresc event
+      velocity: 0.0, // Velocity at last cresc/decresc event
+      time: 0.0, // Time (in ms) at last cresc/decresc event
       mf_start: null,
       slow_cresc_start: null,
       slow_decresc_start: null,

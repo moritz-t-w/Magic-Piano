@@ -18,7 +18,7 @@
     activeNotes,
     currentTick,
   } from "../stores";
-  import { clamp, getHolePan, getHoleType, getKeyByValue } from "../utils";
+  import { clamp, getHoleType, getKeyByValue } from "../utils";
   import {
     getExpressionParams,
     getExpressionStateBox,
@@ -222,6 +222,7 @@
 
   const getVelocityAtTime = (time, expState, expParams) => {
     let newVelocity = expState.velocity;
+    // XXX What if this crosses an acceleration tempo change?
     const msFromLastDynamic = time - expState.time;
 
     const isFastCrescOn =
@@ -287,82 +288,96 @@
 
   const buildExpressionMap = (musicTracks) => {
     const expParams = getExpressionParams($rollMetadata.ROLL_TYPE);
-    //console.log(expParams);
+    const _expressionMap = {};
 
-    const buildPanExpMap = (trackMsgs, adjust) => {
-      const panExpressionMap = new IntervalTree();
+    const buildPanExpMap = (noteTrackMsgs, ctrlTrackMsgs, adjust) => {
       const expState = getExpressionStateBox($rollMetadata.ROLL_TYPE);
       expState.velocity = expParams.welte_p;
 
-      //console.log(expState);
+      const panMsgs = ctrlTrackMsgs
+        .filter(({ name }) => name === "Note on")
+        .concat(
+          noteTrackMsgs.filter(
+            ({ name, velocity }) => name === "Note on" && !!velocity,
+          ),
+        )
+        .sort((a, b) => (a.tick > b.tick ? 1 : -1));
 
-      trackMsgs.forEach(
-        ({ name: msgType, noteNumber: midiNumber, velocity, tick }) => {
-          expState.tempo = getTempoAtTick(tick);
-          const ticksPerSecond = (parseFloat(expState.tempo) * midiTPQ) / 60.0;
-          const msg_time =
-            expState.time +
-            (parseFloat(tick - expState.tick) / ticksPerSecond) * 1000;
+      panMsgs.forEach(({ noteNumber: midiNumber, velocity, tick }) => {
+        const tempo = getTempoAtTick(tick);
+        const ticksPerSecond = (parseFloat(tempo) * midiTPQ) / 60.0;
+        const msgTime =
+          expState.time +
+          (parseFloat(tick - expState.tick) / ticksPerSecond) * 1000;
+
+        const holeType = getHoleType(
+          { m: midiNumber },
+          $rollMetadata.ROLL_TYPE,
+        );
+
+        if (holeType === "note") {
+          // Only apply adjustment (if at all) on the external (played)
+          // velocities, not the interally stored/computed expressions
+          const noteVelocity =
+            getVelocityAtTime(msgTime, expState, expParams) + adjust;
+          console.log("Adding note msg", tick, midiNumber, noteVelocity);
+          if (tick in _expressionMap) {
+            _expressionMap[tick][midiNumber] = noteVelocity;
+          } else {
+            _expressionMap[tick] = new Object();
+            _expressionMap[tick][midiNumber] = noteVelocity;
+          }
+        } else if (holeType === "control") {
+          expState.tempo = tempo;
           const trackerExtensionSeconds = TRACKER_EXTENSION / ticksPerSecond;
 
-          expState.velocity =
-            getVelocityAtTime(msg_time, expState, expParams) + adjust;
-          panExpressionMap.insert(expState.tick, tick, expState.velocity);
+          expState.velocity = getVelocityAtTime(msgTime, expState, expParams);
 
           expState.tick = tick;
-          expState.time = msg_time;
+          expState.time = msgTime;
 
-          if (msgType === "Note on") {
-            // Note on messages include both hole on and hole off events
-            const holeType = getHoleType(
-              { m: midiNumber },
-              $rollMetadata.ROLL_TYPE,
-            );
-            if (holeType !== "control") {
-              // This shouldn't happen
-              return;
+          const ctrlFunc =
+            rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber];
+          if (velocity === 0 && !["sf_on", "sf_off"].includes(ctrlFunc)) {
+            return;
+          }
+          if (ctrlFunc === "mf_on" && velocity > 0) {
+            expState.mf_start = expState.time;
+          } else if (ctrlFunc === "mf_off" && velocity > 0) {
+            expState.mf_start = null;
+          } else if (ctrlFunc === "cresc_on" && velocity > 0) {
+            expState.slow_cresc_start = expState.time;
+            expState.slow_decresc_start = null;
+          } else if (ctrlFunc === "cresc_off" && velocity > 0) {
+            expState.slow_cresc_start = null;
+            expState.slow_decresc_start = expState.time;
+          } else if (ctrlFunc === "sf_on") {
+            if (velocity > 0) {
+              expState.fast_cresc_start = expState.time;
+              expState.fast_cresc_stop = null;
+            } else {
+              expState.fast_cresc_stop =
+                expState.time + trackerExtensionSeconds * 1000.0;
             }
-            const ctrlFunc =
-              rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber];
-            if (velocity === 0 && !["sf_on", "sf_off"].includes(ctrlFunc)) {
-              return;
-            }
-            if (ctrlFunc === "mf_on" && velocity > 0) {
-              expState.mf_start = expState.time;
-            } else if (ctrlFunc === "mf_off" && velocity > 0) {
-              expState.mf_start = null;
-            } else if (ctrlFunc === "cresc_on" && velocity > 0) {
-              expState.slow_cresc_start = expState.time;
-              expState.slow_decresc_start = null;
-            } else if (ctrlFunc === "cresc_off" && velocity > 0) {
-              expState.slow_cresc_start = null;
-              expState.slow_decresc_start = expState.time;
-            } else if (ctrlFunc === "sf_on") {
-              if (velocity > 0) {
-                expState.fast_cresc_start = expState.time;
-                expState.fast_cresc_stop = null;
-              } else {
-                expState.fast_cresc_stop =
-                  expState.time + trackerExtensionSeconds * 1000.0;
-              }
-            } else if (ctrlFunc === "sf_off") {
-              if (velocity > 0) {
-                expState.fast_decresc_start = expState.time;
-                expState.fast_decresc_stop = null;
-              } else {
-                expState.fast_decresc_stop =
-                  expState.time + trackerExtensionSeconds * 1000.0;
-              }
+          } else if (ctrlFunc === "sf_off") {
+            if (velocity > 0) {
+              expState.fast_decresc_start = expState.time;
+              expState.fast_decresc_stop = null;
+            } else {
+              expState.fast_decresc_stop =
+                expState.time + trackerExtensionSeconds * 1000.0;
             }
           }
-        },
-      );
-      return panExpressionMap;
+        }
+      });
     };
-    return {
-      bass: buildPanExpMap(musicTracks[2], expParams.left_adjust),
-      treble: buildPanExpMap(musicTracks[3], 0),
-    };
+
+    // bass notes and control holes
+    buildPanExpMap(musicTracks[0], musicTracks[2], expParams.left_adjust);
+    // treble notes and control holes
+    buildPanExpMap(musicTracks[1], musicTracks[3], 0);
+
+    return _expressionMap;
   };
 
   midiSamplePlayer.on("fileLoaded", () => {
@@ -421,7 +436,7 @@
 
     expressionMap = buildExpressionMap(musicTracks);
 
-    //console.log(expressionMap);
+    console.log(expressionMap);
   });
 
   midiSamplePlayer.on("playing", ({ tick }) => {
@@ -452,16 +467,11 @@
             stopNote(midiNumber, `+${trackerExtensionSeconds}`);
             activeNotes.delete(midiNumber);
           } else {
-            const notePan = getHolePan(
-              { m: midiNumber },
-              $rollMetadata.ROLL_TYPE,
-            );
-
             const noteVelocity = $playExpressionsOnOff
-              ? expressionMap[notePan].search(tick, tick)[0]
+              ? expressionMap[tick][midiNumber]
               : DEFAULT_NOTE_VELOCITY;
 
-            console.log(midiNumber, noteName, tick, notePan, noteVelocity);
+            console.log(midiNumber, noteName, tick, noteVelocity);
 
             startNote(midiNumber, noteVelocity);
             activeNotes.add(midiNumber);
