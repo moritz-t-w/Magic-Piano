@@ -220,6 +220,35 @@
     return _notesMap;
   };
 
+  const getMillisecondsAtTick = (tick) => {
+    if (!tempoMap || !$useMidiTempoEventsOnOff)
+      return (parseFloat(tick) / midiTPQ) * 1000;
+    let lastTime = 0.0;
+    let lastTick = 0;
+    let lastTempo = DEFAULT_TEMPO;
+    let tempo;
+    let i = 0;
+    while (tempoMap[i][0] <= tick) {
+      [, tempo] = tempoMap[i];
+      if (i !== 0) {
+        const lastTicksPerSecond = (parseFloat(lastTempo) * midiTPQ) / 60.0;
+        const ticksAtLastTempo = parseFloat(tempoMap[i][0] - lastTick);
+        const timeAtLastTempo = (ticksAtLastTempo / lastTicksPerSecond) * 1000;
+        lastTime += timeAtLastTempo;
+      }
+      lastTempo = tempo;
+      lastTick = tempoMap[i][0];
+      i += 1;
+      if (i >= tempoMap.length) break;
+    }
+    const lastTicksPerSecond = (parseFloat(lastTempo) * midiTPQ) / 60.0;
+    const ticksAtLastTempo = parseFloat(tick - lastTick);
+    const timeAtLastTempo = (ticksAtLastTempo / lastTicksPerSecond) * 1000;
+    lastTime += timeAtLastTempo;
+
+    return lastTime;
+  };
+
   const getVelocityAtTime = (time, expState, expParams) => {
     let newVelocity = expState.velocity;
     // XXX What if this crosses an acceleration tempo change?
@@ -230,13 +259,13 @@
         expState.fast_cresc_stop === null) ||
       (expState.fast_cresc_start !== null &&
         expState.fast_cresc_stop !== null &&
-        expState.fast_cresc_stop > expState.time);
+        expState.fast_cresc_stop > time);
     const isFastDecrescOn =
       (expState.fast_decresc_start !== null &&
         expState.fast_decresc_stop === null) ||
       (expState.fast_decresc_start !== null &&
         expState.fast_decresc_stop !== null &&
-        expState.fast_decresc_stop > expState.time);
+        expState.fast_decresc_stop > time);
 
     if (
       expState.slow_cresc_start === null &&
@@ -304,11 +333,12 @@
         .sort((a, b) => (a.tick > b.tick ? 1 : -1));
 
       panMsgs.forEach(({ noteNumber: midiNumber, velocity, tick }) => {
-        const tempo = getTempoAtTick(tick);
-        const ticksPerSecond = (parseFloat(tempo) * midiTPQ) / 60.0;
+        const ticksPerSecond =
+          (parseFloat(getTempoAtTick(tick)) * midiTPQ) / 60.0;
         const msgTime =
           expState.time +
           (parseFloat(tick - expState.tick) / ticksPerSecond) * 1000;
+        //const msgTime = getMillisecondsAtTick(tick);
 
         const holeType = getHoleType(
           { m: midiNumber },
@@ -320,7 +350,7 @@
           // velocities, not the interally stored/computed expressions
           const noteVelocity =
             getVelocityAtTime(msgTime, expState, expParams) + adjust;
-          console.log("Adding note msg", tick, midiNumber, noteVelocity);
+
           if (tick in _expressionMap) {
             _expressionMap[tick][midiNumber] = noteVelocity;
           } else {
@@ -328,46 +358,43 @@
             _expressionMap[tick][midiNumber] = noteVelocity;
           }
         } else if (holeType === "control") {
-          expState.tempo = tempo;
-          const trackerExtensionSeconds = TRACKER_EXTENSION / ticksPerSecond;
-
-          expState.velocity = getVelocityAtTime(msgTime, expState, expParams);
-
-          expState.tick = tick;
-          expState.time = msgTime;
-
           const ctrlFunc =
             rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber];
           if (velocity === 0 && !["sf_on", "sf_off"].includes(ctrlFunc)) {
             return;
           }
+          const panVelocity = getVelocityAtTime(msgTime, expState, expParams);
+          const trackerExtensionSeconds = TRACKER_EXTENSION / ticksPerSecond;
           if (ctrlFunc === "mf_on" && velocity > 0) {
-            expState.mf_start = expState.time;
+            expState.mf_start = msgTime;
           } else if (ctrlFunc === "mf_off" && velocity > 0) {
             expState.mf_start = null;
           } else if (ctrlFunc === "cresc_on" && velocity > 0) {
-            expState.slow_cresc_start = expState.time;
+            expState.slow_cresc_start = msgTime;
             expState.slow_decresc_start = null;
           } else if (ctrlFunc === "cresc_off" && velocity > 0) {
             expState.slow_cresc_start = null;
-            expState.slow_decresc_start = expState.time;
+            expState.slow_decresc_start = msgTime;
           } else if (ctrlFunc === "sf_on") {
             if (velocity > 0) {
-              expState.fast_cresc_start = expState.time;
+              expState.fast_cresc_start = msgTime;
               expState.fast_cresc_stop = null;
             } else {
               expState.fast_cresc_stop =
-                expState.time + trackerExtensionSeconds * 1000.0;
+                msgTime + trackerExtensionSeconds * 1000.0;
             }
           } else if (ctrlFunc === "sf_off") {
             if (velocity > 0) {
-              expState.fast_decresc_start = expState.time;
+              expState.fast_decresc_start = msgTime;
               expState.fast_decresc_stop = null;
             } else {
               expState.fast_decresc_stop =
-                expState.time + trackerExtensionSeconds * 1000.0;
+                msgTime + trackerExtensionSeconds * 1000.0;
             }
           }
+          expState.tick = tick;
+          expState.time = msgTime;
+          expState.velocity = panVelocity;
         }
       });
     };
@@ -432,11 +459,7 @@
 
     notesMap = buildNotesMap(musicTracks);
 
-    console.log(midiSamplePlayer.events);
-
     expressionMap = buildExpressionMap(musicTracks);
-
-    console.log(expressionMap);
   });
 
   midiSamplePlayer.on("playing", ({ tick }) => {
@@ -459,10 +482,11 @@
           $rollMetadata.ROLL_TYPE,
         );
         if (holeType === "note") {
+          const tempo = getTempoAtTick(tick);
+          //const thisTime = getMillisecondsAtTick(tick);
           if (velocity === 0) {
+            const ticksPerSecond = (parseFloat(tempo) * midiTPQ) / 60.0;
             // At 591 TPQ & 60bpm, this is ~.02s, drops slowly due to accel
-            const ticksPerSecond =
-              (parseFloat(getTempoAtTick(tick)) * midiTPQ) / 60.0;
             const trackerExtensionSeconds = TRACKER_EXTENSION / ticksPerSecond;
             stopNote(midiNumber, `+${trackerExtensionSeconds}`);
             activeNotes.delete(midiNumber);
@@ -471,7 +495,10 @@
               ? expressionMap[tick][midiNumber]
               : DEFAULT_NOTE_VELOCITY;
 
-            console.log(midiNumber, noteName, tick, noteVelocity);
+            // console.log(
+            //   noteName,
+            //   noteVelocity,
+            // );
 
             startNote(midiNumber, noteVelocity);
             activeNotes.add(midiNumber);
