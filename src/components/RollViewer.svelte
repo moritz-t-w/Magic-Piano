@@ -85,6 +85,7 @@
     userSettings,
     animatePan,
     playExpressionsOnOff,
+    inAppExpressionsOnOff,
     rollPedalingOnOff,
     playbackProgress,
     noteVelocities,
@@ -143,38 +144,47 @@
   let imageWidth;
   let avgHoleWidth;
   let trackerbarHeight;
+  let scrollDownwards;
+  let svg;
 
-  const calculateHoleColors = (holeData, noteData) => {
+  const calculateHoleColors = (holeData, noteData, inAppExpression) => {
     let minNoteVelocity = 64;
     let maxNoteVelocity = 64;
 
-    if (Object.keys(noteData).length) {
+    scrollDownwards = $rollMetadata.ROLL_TYPE === "welte-red";
+
+    firstHolePx = scrollDownwards
+      ? parseInt($rollMetadata.FIRST_HOLE, 10)
+      : parseInt($rollMetadata.IMAGE_LENGTH, 10) -
+        parseInt($rollMetadata.FIRST_HOLE, 10);
+
+    if (inAppExpression && Object.keys(noteData).length) {
       for (let tick in noteData) {
-        for (let midiNumber in noteData[tick]) {
-          minNoteVelocity = Math.min(
-            noteData[tick][midiNumber],
-            minNoteVelocity,
-          );
-          maxNoteVelocity = Math.max(
-            noteData[tick][midiNumber],
-            maxNoteVelocity,
-          );
+        for (let midiKey in noteData[tick]) {
+          minNoteVelocity = Math.min(noteData[tick][midiKey], minNoteVelocity);
+          maxNoteVelocity = Math.max(noteData[tick][midiKey], maxNoteVelocity);
         }
       }
-      console.log(minNoteVelocity, maxNoteVelocity);
     } else {
       const velocities = holeData.map(({ v }) => v).filter((v) => v);
       minNoteVelocity = Math.min(...velocities);
       maxNoteVelocity = Math.max(...velocities);
     }
 
+    console.log(
+      "Min velocity",
+      minNoteVelocity,
+      "max velocity",
+      maxNoteVelocity,
+    );
+
     const getNoteHoleColor = ({ v: velocity, m: midiKey, y: offsetY }) => {
       if (
-        offsetY - firstHolePx in $noteVelocities &&
-        midiKey in $noteVelocities[offsetY]
+        inAppExpression &&
+        offsetY - firstHolePx in noteData &&
+        midiKey in noteData[offsetY - firstHolePx]
       ) {
-        console.log(velocity, $noteVelocities[offsetY][midiKey]);
-        velocity = $noteVelocities[offsetY][midiKey];
+        velocity = noteData[offsetY - firstHolePx][midiKey];
       }
       return holeColorMap[
         Math.round(
@@ -201,10 +211,16 @@
 
         case "note":
           if (
-            hole.offsetY in $noteVelocities &&
-            hole.midiKey in $noteVelocities[hole.offsetY]
+            inAppExpression &&
+            hole.y - firstHolePx in noteData &&
+            hole.m in noteData[hole.y - firstHolePx]
           ) {
-            hole.V = $noteVelocities[hole.offsetY][hole.midiKey];
+            hole.V =
+              Math.round(
+                (noteData[hole.y - firstHolePx][hole.m] + Number.EPSILON) * 100,
+              ) / 100;
+          } else {
+            hole.V = "?";
           }
           hole.color = getNoteHoleColor(hole);
 
@@ -215,6 +231,8 @@
           hole.color = defaultHoleColor;
       }
     });
+
+    createHolesOverlaySvg();
   };
 
   let osdNavDisplayRegion;
@@ -267,7 +285,13 @@
     const { holeData } = $rollMetadata;
     if (!holeData) return;
 
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    if (!viewport) return;
+
+    if (svg) {
+      viewport.viewer.removeOverlay(svg);
+    }
+
+    svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
     const entireViewportRectangle = viewport.imageToViewportRectangle(
@@ -474,7 +498,11 @@
 
   $: advanceToTick($currentTick);
   $: highlightHoles($currentTick);
-  $: calculateHoleColors($rollMetadata.holeData, $noteVelocities);
+  $: calculateHoleColors(
+    $rollMetadata.holeData,
+    $noteVelocities,
+    $inAppExpressionsOnOff,
+  );
   $: scrollDownwards = $rollMetadata.ROLL_TYPE === "welte-red";
   $: imageLength = parseInt($rollMetadata.IMAGE_LENGTH, 10);
   $: imageWidth = parseInt($rollMetadata.IMAGE_WIDTH, 10);

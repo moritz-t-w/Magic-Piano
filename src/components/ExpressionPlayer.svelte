@@ -358,7 +358,7 @@
       tick,
       value: ctrlrVal,
       number: ctrlrNumber,
-      //noteName,
+      noteName,
     }) => {
       if (msgType === "Note on") {
         const holeType = getHoleType(
@@ -366,13 +366,13 @@
           $rollMetadata.ROLL_TYPE,
         );
         const ticksPerSecond = (parseFloat(expState.tempo) * midiTPQ) / 60.0;
+        // At 591 TPQ & 60bpm, this is ~.02s, drops slowly due to accel
+        const trackerExtensionSeconds = TRACKER_EXTENSION / ticksPerSecond;
         expState.time +=
           (parseFloat(tick - expState.tick) / ticksPerSecond) * 1000;
         expState.tick = tick;
         if (holeType === "note") {
           if (velocity === 0) {
-            // At 591 TPQ & 60bpm, this is ~.02s, drops slowly due to accel
-            const trackerExtensionSeconds = TRACKER_EXTENSION / ticksPerSecond;
             stopNote(midiNumber, `+${trackerExtensionSeconds}`);
             activeNotes.delete(midiNumber);
           } else {

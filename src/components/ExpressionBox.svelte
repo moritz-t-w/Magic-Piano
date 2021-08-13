@@ -17,6 +17,7 @@
     useMidiTempoEventsOnOff,
     activeNotes,
     currentTick,
+    noteVelocities,
   } from "../stores";
   import { clamp, getHoleType, getKeyByValue } from "../utils";
   import {
@@ -29,13 +30,13 @@
   let tempoMap;
   let pedalingMap;
   let notesMap;
-  let expressionMap;
 
   const TRACKERBAR_DIAMETER = 16.7; // try AVG_HOLE_WIDTH instead?
   const PUNCH_EXTENSION_FRACTION = 0.75;
-  const TRACKER_EXTENSION = parseInt(
-    TRACKERBAR_DIAMETER * PUNCH_EXTENSION_FRACTION,
-  );
+  // const TRACKER_EXTENSION = parseInt(
+  //   TRACKERBAR_DIAMETER * PUNCH_EXTENSION_FRACTION,
+  // );
+  const TRACKER_EXTENSION = 0;
 
   let SOFT_PEDAL_ON;
   let SOFT_PEDAL_OFF;
@@ -459,7 +460,7 @@
 
     notesMap = buildNotesMap(musicTracks);
 
-    expressionMap = buildExpressionMap(musicTracks);
+    $noteVelocities = buildExpressionMap(musicTracks);
   });
 
   midiSamplePlayer.on("playing", ({ tick }) => {
@@ -492,7 +493,7 @@
             activeNotes.delete(midiNumber);
           } else {
             const noteVelocity = $playExpressionsOnOff
-              ? expressionMap[tick][midiNumber]
+              ? $noteVelocities[tick][midiNumber]
               : DEFAULT_NOTE_VELOCITY;
 
             // console.log(

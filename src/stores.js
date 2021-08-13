@@ -52,6 +52,7 @@ export const trebleVolumeCoefficient = createStore(1);
 export const tempoCoefficient = createStore(1);
 
 export const playExpressionsOnOff = createStore(true);
+export const inAppExpressionsOnOff = createStore(false);
 export const rollPedalingOnOff = createStore(true);
 export const useMidiTempoEventsOnOff = createStore(true);
 
