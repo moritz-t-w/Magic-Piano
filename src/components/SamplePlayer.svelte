@@ -73,7 +73,6 @@
       softOnOff.set(pedals.includes(SOFT_PEDAL));
     } else {
       sustainOnOff.set(false);
-      piano.pedalUp();
       softOnOff.set(false);
     }
 
@@ -113,9 +112,9 @@
 
   const stopNote = (noteNumber) => piano.keyUp({ midi: noteNumber });
 
-  const stopAllNotes = () => {
+  const stopAllNotes = (duringRewind) => {
     piano.pedalUp();
-    if ($sustainOnOff) piano.pedalDown();
+    if (!duringRewind && $sustainOnOff) piano.pedalDown();
     $activeNotes.forEach(stopNote);
   };
 
@@ -128,9 +127,9 @@
     accentOnOff.reset();
   };
 
-  const pausePlayback = () => {
+  const pausePlayback = (duringRewind) => {
     midiSamplePlayer.pause();
-    stopAllNotes();
+    stopAllNotes(duringRewind);
   };
 
   const startPlayback = () => {

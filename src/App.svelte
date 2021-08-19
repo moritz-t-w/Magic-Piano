@@ -131,7 +131,7 @@
   };
 
   const skipToTick = (tick) => {
-    if (tick < 0) pausePlayback();
+    if (tick < 0) pausePlayback(false);
     $currentTick = tick;
     updatePlayer(() => midiSamplePlayer.skipToTick($currentTick));
   };
@@ -141,21 +141,21 @@
 
   const playPauseApp = () => {
     if (midiSamplePlayer.isPlaying()) {
-      pausePlayback();
+      pausePlayback(false);
     } else {
       startPlayback();
     }
   };
 
   const stopApp = () => {
-    pausePlayback();
+    pausePlayback(true);
     resetPlayback();
   };
 
   const resetApp = () => {
     mididataReady = false;
     appReady = false;
-    pausePlayback();
+    pausePlayback(true);
     resetPlayback();
     playbackProgress.reset();
     tempoCoefficient.reset();
