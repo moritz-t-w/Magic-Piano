@@ -32,7 +32,7 @@
 <script>
   import Icon from "../ui-components/Icon.svelte";
 
-  const panels = ["controls", "settings"];
+  const panels = ["controls", "settings", "audio"];
   export let selectedPanel;
 </script>
 
