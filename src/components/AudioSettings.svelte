@@ -39,6 +39,23 @@
     font-family: $primary-typeface;
     font-size: 1.4em;
   }
+
+  button {
+    display: inline-block;
+    padding: 0.35em 0.8em;
+    border: 0.1em solid #ffffff;
+    margin: 0;
+    border-radius: 0.25em;
+    color: #ffffff;
+    transition: all 0.2s;
+    background-color: var(--primary-accent);
+
+    &:hover {
+      color: var(--primary-accent);
+      border-color: var(--primary-accent);
+      background-color: #ffffff;
+    }
+  }
 </style>
 
 <script>
@@ -144,8 +161,8 @@
       <span>A0-B1</span>
       <span>{$octaveVelocitiesAdjust["0"]}</span>
       <RangeSlider
-        min="-10"
-        max="10"
+        min="-20"
+        max="20"
         step="1"
         bind:value={$octaveVelocitiesAdjust["0"]}
         name="a0-b1-velocity-adjust"
@@ -155,8 +172,8 @@
       <span>C2-B2</span>
       <span>{$octaveVelocitiesAdjust["1"]}</span>
       <RangeSlider
-        min="-10"
-        max="10"
+        min="-20"
+        max="20"
         step="1"
         bind:value={$octaveVelocitiesAdjust["1"]}
         name="c2-b2-velocity-adjust"
@@ -166,8 +183,8 @@
       <span>C3-B3</span>
       <span>{$octaveVelocitiesAdjust["2"]}</span>
       <RangeSlider
-        min="-10"
-        max="10"
+        min="-20"
+        max="20"
         step="1"
         bind:value={$octaveVelocitiesAdjust["2"]}
         name="c3-b3-velocity-adjust"
@@ -177,8 +194,8 @@
       <span>C4-B4</span>
       <span>{$octaveVelocitiesAdjust["3"]}</span>
       <RangeSlider
-        min="-10"
-        max="10"
+        min="-20"
+        max="20"
         step="1"
         bind:value={$octaveVelocitiesAdjust["3"]}
         name="c4-b4-velocity-adjust"
@@ -188,8 +205,8 @@
       <span>C5-B5</span>
       <span>{$octaveVelocitiesAdjust["4"]}</span>
       <RangeSlider
-        min="-10"
-        max="10"
+        min="-20"
+        max="20"
         step="1"
         bind:value={$octaveVelocitiesAdjust["4"]}
         name="c5-b5-velocity-adjust"
@@ -199,8 +216,8 @@
       <span>C6-B6</span>
       <span>{$octaveVelocitiesAdjust["5"]}</span>
       <RangeSlider
-        min="-10"
-        max="10"
+        min="-20"
+        max="20"
         step="1"
         bind:value={$octaveVelocitiesAdjust["5"]}
         name="c6-b6-velocity-adjust"
@@ -210,12 +227,24 @@
       <span>C7-C8</span>
       <span>{$octaveVelocitiesAdjust["6"]}</span>
       <RangeSlider
-        min="-10"
-        max="10"
+        min="-20"
+        max="20"
         step="1"
         bind:value={$octaveVelocitiesAdjust["6"]}
         name="c7-c8-velocity-adjust"
       />
     </div>
+    <button
+      type="button"
+      on:click={() => {
+        $octaveVelocitiesAdjust["0"] = 0;
+        $octaveVelocitiesAdjust["1"] = 0;
+        $octaveVelocitiesAdjust["2"] = 0;
+        $octaveVelocitiesAdjust["3"] = 0;
+        $octaveVelocitiesAdjust["4"] = 0;
+        $octaveVelocitiesAdjust["5"] = 0;
+        $octaveVelocitiesAdjust["6"] = 0;
+      }}>Reset</button
+    >
   </fieldset>
 </div>
