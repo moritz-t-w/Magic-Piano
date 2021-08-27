@@ -50,6 +50,8 @@
         <Icon name="sliders" height="24" width="24" />
       {:else if panel === "settings"}
         <Icon name="cog" height="24" width="24" />
+      {:else if panel === "audio"}
+        <Icon name="piano" height="24" width="24" />
       {/if}
     </label>
   {/each}
