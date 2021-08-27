@@ -21,7 +21,9 @@
     sampleVolumes,
     sampleVelocities,
     reverbWetDry,
+    octaveVelocitiesAdjust,
   } from "../stores";
+  import { getNoteOctave } from "../utils";
 
   let tempoMap;
   let pedalingMap;
@@ -118,7 +120,9 @@
 
   const startNote = (noteNumber, velocity) => {
     const modifiedVelocity =
-      ((($playExpressionsOnOff && velocity) || DEFAULT_NOTE_VELOCITY) / 100) *
+      (((($playExpressionsOnOff && velocity) || DEFAULT_NOTE_VELOCITY) +
+        $octaveVelocitiesAdjust[Math.max(0, getNoteOctave(noteNumber) - 1)]) /
+        100) *
       (($softOnOff && SOFT_PEDAL_RATIO) || 1) *
       (($accentOnOff && ACCENT_BUMP) || 1) *
       $volumeCoefficient *
