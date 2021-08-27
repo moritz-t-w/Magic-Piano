@@ -34,8 +34,10 @@ export const getHoleType = ({ m: midiNumber }, rollType) => {
 // 0 and 1
 export const mapToRange = (value, min, max) => value * (max - min) + min;
 
+export const getNoteOctave = (midiNumber) => parseInt(midiNumber / 12, 10) - 1;
+
 export const getNoteName = (midiNumber) => {
-  const octave = parseInt(midiNumber / 12, 10) - 1;
+  const octave = getNoteOctave(midiNumber);
   const name = [
     "A",
     "A#",
