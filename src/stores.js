@@ -103,14 +103,12 @@ export const sampleVolumes = createStore({
 });
 export const sampleVelocities = createStore(4);
 export const reverbWetDry = createStore(0.8);
-export const octaveVelocitiesAdjust = createStore({
-  0: 0, // This is actually A0-B1
-  1: 0, // C2-B2
-  2: 0, // C3-B3
-  3: 0, // C4-B4
-  4: 0, // C5-B5
-  5: 0, // C6-B6
-  6: 0, // C7-C8 (note extra key)
+export const velocitiesAdjust = createStore({
+  0: 0, // 0-1.9
+  1: 0, // .2-3.9
+  2: 0, // .4-5.9
+  3: 0, // .6-7.9
+  4: 0, // .8-1
 });
 
 // Playback State

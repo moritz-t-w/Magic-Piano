@@ -64,7 +64,7 @@
     sampleVolumes,
     sampleVelocities,
     reverbWetDry,
-    octaveVelocitiesAdjust,
+    velocitiesAdjust,
   } from "../stores";
 
   import RangeSlider from "../ui-components/RangeSlider.svelte";
@@ -156,94 +156,70 @@
     </div>
   </fieldset>
   <fieldset>
-    <legend>Octave Velocity Adjustments</legend>
+    <legend>C6-C8 Velocity Adjustments</legend>
     <div class="control">
-      <span>A0-B1</span>
-      <span>{$octaveVelocitiesAdjust["0"]}</span>
+      <span>Input Velocity 0-19%</span>
+      <span>{$velocitiesAdjust["0"]}</span>
       <RangeSlider
-        min="-20"
-        max="20"
-        step="1"
-        bind:value={$octaveVelocitiesAdjust["0"]}
-        name="a0-b1-velocity-adjust"
+        min="-1"
+        max="1"
+        step=".1"
+        bind:value={$velocitiesAdjust["0"]}
+        name="upper-velocity-adjust-0-19"
       />
     </div>
     <div class="control">
-      <span>C2-B2</span>
-      <span>{$octaveVelocitiesAdjust["1"]}</span>
+      <span>Input Velocity 20-39%</span>
+      <span>{$velocitiesAdjust["1"]}</span>
       <RangeSlider
-        min="-20"
-        max="20"
-        step="1"
-        bind:value={$octaveVelocitiesAdjust["1"]}
-        name="c2-b2-velocity-adjust"
+        min="-1"
+        max="1"
+        step=".1"
+        bind:value={$velocitiesAdjust["1"]}
+        name="upper-velocity-adjust-20-39"
       />
     </div>
     <div class="control">
-      <span>C3-B3</span>
-      <span>{$octaveVelocitiesAdjust["2"]}</span>
+      <span>Input Velocity 40-59%</span>
+      <span>{$velocitiesAdjust["2"]}</span>
       <RangeSlider
-        min="-20"
-        max="20"
-        step="1"
-        bind:value={$octaveVelocitiesAdjust["2"]}
-        name="c3-b3-velocity-adjust"
+        min="-1"
+        max="1"
+        step=".1"
+        bind:value={$velocitiesAdjust["2"]}
+        name="upper-velocity-adjust-40-59"
       />
     </div>
     <div class="control">
-      <span>C4-B4</span>
-      <span>{$octaveVelocitiesAdjust["3"]}</span>
+      <span>Input Velocity 60-79%</span>
+      <span>{$velocitiesAdjust["3"]}</span>
       <RangeSlider
-        min="-20"
-        max="20"
-        step="1"
-        bind:value={$octaveVelocitiesAdjust["3"]}
-        name="c4-b4-velocity-adjust"
+        min="-1"
+        max="1"
+        step=".1"
+        bind:value={$velocitiesAdjust["3"]}
+        name="upper-velocity-adjust-60-79"
       />
     </div>
     <div class="control">
-      <span>C5-B5</span>
-      <span>{$octaveVelocitiesAdjust["4"]}</span>
+      <span>Input Velocity 80-100%</span>
+      <span>{$velocitiesAdjust["4"]}</span>
       <RangeSlider
-        min="-20"
-        max="20"
-        step="1"
-        bind:value={$octaveVelocitiesAdjust["4"]}
-        name="c5-b5-velocity-adjust"
-      />
-    </div>
-    <div class="control">
-      <span>C6-B6</span>
-      <span>{$octaveVelocitiesAdjust["5"]}</span>
-      <RangeSlider
-        min="-20"
-        max="20"
-        step="1"
-        bind:value={$octaveVelocitiesAdjust["5"]}
-        name="c6-b6-velocity-adjust"
-      />
-    </div>
-    <div class="control">
-      <span>C7-C8</span>
-      <span>{$octaveVelocitiesAdjust["6"]}</span>
-      <RangeSlider
-        min="-20"
-        max="20"
-        step="1"
-        bind:value={$octaveVelocitiesAdjust["6"]}
-        name="c7-c8-velocity-adjust"
+        min="-1"
+        max="1"
+        step=".1"
+        bind:value={$velocitiesAdjust["4"]}
+        name="upper-velocity-adjust-80-100"
       />
     </div>
     <button
       type="button"
       on:click={() => {
-        $octaveVelocitiesAdjust["0"] = 0;
-        $octaveVelocitiesAdjust["1"] = 0;
-        $octaveVelocitiesAdjust["2"] = 0;
-        $octaveVelocitiesAdjust["3"] = 0;
-        $octaveVelocitiesAdjust["4"] = 0;
-        $octaveVelocitiesAdjust["5"] = 0;
-        $octaveVelocitiesAdjust["6"] = 0;
+        $velocitiesAdjust["0"] = 0;
+        $velocitiesAdjust["1"] = 0;
+        $velocitiesAdjust["2"] = 0;
+        $velocitiesAdjust["3"] = 0;
+        $velocitiesAdjust["4"] = 0;
       }}>Reset</button
     >
   </fieldset>
