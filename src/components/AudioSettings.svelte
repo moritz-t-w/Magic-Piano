@@ -156,7 +156,7 @@
     </div>
   </fieldset>
   <fieldset>
-    <legend>C6-C8 Velocity Adjustments</legend>
+    <legend>C5-C8 Velocity Adjustments</legend>
     <div class="control">
       <span>Input Velocity 0-19%</span>
       <span>{$velocitiesAdjust["0"]}</span>

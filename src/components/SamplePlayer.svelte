@@ -123,7 +123,7 @@
       (($playExpressionsOnOff && velocity) || DEFAULT_NOTE_VELOCITY) / 100;
     const noteOctave = getNoteOctave(noteNumber);
 
-    if (noteOctave >= 6) {
+    if (noteOctave >= 5) {
       baseVelocity +=
         baseVelocity *
         $velocitiesAdjust[Math.min(parseInt(baseVelocity * 5, 10), 4)];
