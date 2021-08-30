@@ -94,6 +94,7 @@
     playExpressionsOnOff,
     rollPedalingOnOff,
     playbackProgress,
+    scrollThrottling,
   } from "../stores";
   import {
     clamp,
@@ -150,6 +151,8 @@
   let trackerbarHeight;
   let animationEaseInterval;
   let osdNavDisplayRegion;
+
+  let lastScrollTime = 0;
 
   const annotateHoleData = (holeData) => {
     const velocities = holeData.map(({ v }) => v).filter((v) => v);
@@ -310,8 +313,15 @@
 
   // Pan the viewer to bring the position of `@tick` to the center of
   //  the viewport.  Does not trigger an OSD `pan` event.
-  const updateViewportFromTick = (tick) => {
+  const updateViewportFromTick = (tick, auto) => {
     if (!openSeadragon) return;
+
+    const now = Date.now();
+
+    if (auto !== undefined && now - lastScrollTime < $scrollThrottling) return;
+
+    lastScrollTime = now;
+
     const linePx = firstHolePx + ($scrollDownwards ? tick : -tick);
     const lineViewport = viewport.imageToViewportCoordinates(0, linePx);
 
@@ -550,7 +560,7 @@
     openSeadragon.open(imageUrl);
   });
 
-  $: updateViewportFromTick($currentTick);
+  $: updateViewportFromTick($currentTick, true);
   $: highlightHoles($currentTick);
   $: annotateHoleData($rollMetadata.holeData);
   $: imageLength = parseInt($rollMetadata.IMAGE_LENGTH, 10);

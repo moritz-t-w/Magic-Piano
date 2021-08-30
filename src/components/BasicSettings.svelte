@@ -26,6 +26,7 @@
     trebleVolumeCoefficient,
     tempoCoefficient,
     playbackProgress,
+    scrollThrottling,
   } from "../stores";
   import RangeSlider from "../ui-components/RangeSlider.svelte";
 
@@ -118,6 +119,18 @@
       value={$playbackProgress}
       name="progress"
       on:input={({ target: { value } }) => skipToPercentage(value)}
+      mousewheel={false}
+    />
+  </div>
+  <div class="control">
+    <span>Scroll Event Throttling (ms):</span>
+    <span>{$scrollThrottling}</span>
+    <RangeSlider
+      min="0"
+      max="50"
+      step="1"
+      bind:value={$scrollThrottling}
+      name="scroll-throttling"
       mousewheel={false}
     />
   </div>

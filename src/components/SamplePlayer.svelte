@@ -19,6 +19,8 @@
     currentTick,
   } from "../stores";
 
+  export let skipToTick;
+
   let tempoMap;
   let pedalingMap;
   let notesMap;
@@ -119,18 +121,19 @@
     $activeNotes.forEach(stopNote);
   };
 
+  const pausePlayback = () => {
+    midiSamplePlayer.pause();
+    stopAllNotes();
+  };
+
   const resetPlayback = () => {
-    currentTick.reset();
+    pausePlayback();
     midiSamplePlayer.stop();
     activeNotes.reset();
     softOnOff.reset();
     sustainOnOff.reset();
     accentOnOff.reset();
-  };
-
-  const pausePlayback = () => {
-    midiSamplePlayer.pause();
-    stopAllNotes();
+    skipToTick(0);
   };
 
   const startPlayback = () => {

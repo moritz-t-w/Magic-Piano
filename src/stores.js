@@ -83,6 +83,8 @@ export const playExpressionsOnOff = createStore(true);
 export const rollPedalingOnOff = createStore(true);
 export const useMidiTempoEventsOnOff = createStore(true);
 
+export const scrollThrottling = createStore(30); // ms
+
 // Playback State
 export const currentTick = createStore(0);
 export const playbackProgress = createStore(0);

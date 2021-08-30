@@ -304,7 +304,7 @@
     </div>
   {/if}
 </div>
-<SamplePlayer bind:this={samplePlayer} />
+<SamplePlayer bind:this={samplePlayer} {skipToTick} />
 <KeyboardShortcuts {playPauseApp} {stopApp} {updateTickByViewportIncrement} />
 <Notification />
 
