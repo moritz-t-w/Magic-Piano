@@ -22,6 +22,9 @@
   let tempoMap;
   let pedalingMap;
   let notesMap;
+  let playbackStartTick;
+  let playbackStartTime;
+  let midiTPQ;
 
   const SOFT_PEDAL = 67;
   const SUSTAIN_PEDAL = 64;
@@ -62,6 +65,35 @@
     return tempo;
   };
 
+  const getElapsedTimeAtTick = (tick) => {
+    let ticksPerSecond;
+    let prevTempo = null;
+    let thisTick;
+    let thisTempo;
+    let i = 0;
+    let tempoStartTick;
+    let elapsedTime = 0;
+    while (tempoMap[i][0] <= tick) {
+      [thisTick, thisTempo] = tempoMap[i];
+      i += 1;
+      if (prevTempo === null) {
+        prevTempo = thisTempo;
+        tempoStartTick = thisTick;
+        continue;
+      }
+      if (thisTempo != prevTempo) {
+        ticksPerSecond = (prevTempo * midiTPQ) / 60.0;
+        elapsedTime += (1 / ticksPerSecond) * (thisTick - 1 - tempoStartTick);
+        tempoStartTick = thisTick;
+        prevTempo = thisTempo;
+      }
+      if (i >= tempoMap.length) break;
+    }
+    ticksPerSecond = (prevTempo * midiTPQ) / 60.0;
+    elapsedTime += (1 / ticksPerSecond) * (tick - tempoStartTick);
+    return elapsedTime;
+  };
+
   const setPlayerStateAtTick = (tick = $currentTick) => {
     if (midiSamplePlayer.tracks[0])
       midiSamplePlayer.tracks[0].enabled = $useMidiTempoEventsOnOff;
@@ -94,7 +126,7 @@
     setPlayerStateAtTick($currentTick);
   };
 
-  const startNote = (noteNumber, velocity) => {
+  const startNote = (noteNumber, velocity, tick) => {
     const modifiedVelocity =
       ((($playExpressionsOnOff && velocity) || DEFAULT_NOTE_VELOCITY) / 100) *
       (($softOnOff && SOFT_PEDAL_RATIO) || 1) *
@@ -104,6 +136,42 @@
         ? $bassVolumeCoefficient
         : $trebleVolumeCoefficient);
     if (modifiedVelocity) {
+      // console.log(
+      //   "starting note",
+      //   noteNumber,
+      //   "event tick",
+      //   tick,
+      //   "MIDI player tick",
+      //   midiSamplePlayer.getCurrentTick(),
+      //   "$currentTick",
+      //   $currentTick,
+      // );
+      if (notesMap.search(tick, tick).includes(noteNumber)) {
+        const thisTime = Date.now();
+        const elapsedTime = (thisTime - playbackStartTime) / 1000;
+        const expectedElapsedTime =
+          getElapsedTimeAtTick(tick) - getElapsedTimeAtTick(playbackStartTick);
+        const elapsedTimeDiff = elapsedTime - expectedElapsedTime;
+        // console.log(
+        //   noteNumber,
+        //   "on at",
+        //   $currentTick,
+        //   "playback start",
+        //   playbackStartTime,
+        //   "playback start tick",
+        //   playbackStartTick,
+        //   "time now",
+        //   thisTime,
+        //   "elapsed",
+        //   elapsedTime,
+        //   "expected",
+        //   expectedElapsedTime,
+        // );
+        if (elapsedTimeDiff > 0.1) {
+          console.log(noteNumber, elapsedTime - expectedElapsedTime);
+        }
+      }
+
       piano.keyDown({
         midi: noteNumber,
         velocity: Math.min(modifiedVelocity, 1),
@@ -136,6 +204,21 @@
   const startPlayback = () => {
     if ($currentTick < 0) resetPlayback();
     updatePlayer();
+    console.log("starting playback at $currenttick", $currentTick);
+    console.log(
+      "MIDI player says start tick is",
+      midiSamplePlayer.getCurrentTick(),
+    );
+    console.log(
+      "starting tempo at $curentTick is",
+      getTempoAtTick($currentTick),
+    );
+    console.log(
+      "ticks per second at current tempo is",
+      getTempoAtTick($currentTick) * midiTPQ,
+    ) / 60.0;
+    playbackStartTick = $currentTick;
+    playbackStartTime = Date.now();
     midiSamplePlayer.play();
   };
 
@@ -215,6 +298,8 @@
       ),
     );
 
+    midiTPQ = midiSamplePlayer.getDivision().division;
+
     tempoMap = buildTempoMap(metadataTrack);
 
     // where two or more "music tracks" exist, pedal events are expected to have
@@ -230,13 +315,22 @@
 
   midiSamplePlayer.on(
     "midiEvent",
-    ({ name, value, number, noteNumber, velocity, data }) => {
+    ({ name, value, number, noteNumber, velocity, data, tick }) => {
       if (name === "Note on") {
         if (velocity === 0) {
           stopNote(noteNumber);
           activeNotes.delete(noteNumber);
         } else {
-          startNote(noteNumber, velocity);
+          // console.log(
+          //   "midi note on",
+          //   noteNumber,
+          //   tick,
+          //   "player says tick is",
+          //   midiSamplePlayer.getCurrentTick(),
+          //   "$currentTick is",
+          //   $currentTick,
+          // );
+          startNote(noteNumber, velocity, tick);
           activeNotes.add(noteNumber);
         }
       } else if (name === "Controller Change" && $rollPedalingOnOff) {
