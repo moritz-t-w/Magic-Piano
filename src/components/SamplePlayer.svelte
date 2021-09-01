@@ -82,14 +82,14 @@
         continue;
       }
       if (thisTempo != prevTempo) {
-        ticksPerSecond = (prevTempo * midiTPQ) / 60.0;
+        ticksPerSecond = (prevTempo * $tempoCoefficient * midiTPQ) / 60.0;
         elapsedTime += (1 / ticksPerSecond) * (thisTick - 1 - tempoStartTick);
         tempoStartTick = thisTick;
         prevTempo = thisTempo;
       }
       if (i >= tempoMap.length) break;
     }
-    ticksPerSecond = (prevTempo * midiTPQ) / 60.0;
+    ticksPerSecond = (prevTempo * $tempoCoefficient * midiTPQ) / 60.0;
     elapsedTime += (1 / ticksPerSecond) * (tick - tempoStartTick);
     return elapsedTime;
   };
@@ -98,6 +98,9 @@
     if (midiSamplePlayer.tracks[0])
       midiSamplePlayer.tracks[0].enabled = $useMidiTempoEventsOnOff;
     midiSamplePlayer.setTempo(getTempoAtTick(tick) * $tempoCoefficient);
+
+    playbackStartTick = $currentTick;
+    playbackStartTime = Date.now();
 
     if (pedalingMap && $rollPedalingOnOff) {
       const pedals = pedalingMap.search($currentTick, $currentTick);
@@ -168,8 +171,18 @@
         //   expectedElapsedTime,
         // );
         if (elapsedTimeDiff > 0.1) {
+          // One (probably bad) option: if its expected release time has
+          // gone by, just "drop" (don't play) the note
           console.log(noteNumber, elapsedTime - expectedElapsedTime);
         }
+      } else {
+        console.log(
+          "Couldn't find note",
+          noteNumber,
+          "at tick",
+          tick,
+          "in notesMap",
+        );
       }
 
       piano.keyDown({
@@ -204,21 +217,6 @@
   const startPlayback = () => {
     if ($currentTick < 0) resetPlayback();
     updatePlayer();
-    console.log("starting playback at $currenttick", $currentTick);
-    console.log(
-      "MIDI player says start tick is",
-      midiSamplePlayer.getCurrentTick(),
-    );
-    console.log(
-      "starting tempo at $curentTick is",
-      getTempoAtTick($currentTick),
-    );
-    console.log(
-      "ticks per second at current tempo is",
-      getTempoAtTick($currentTick) * midiTPQ,
-    ) / 60.0;
-    playbackStartTick = $currentTick;
-    playbackStartTime = Date.now();
     midiSamplePlayer.play();
   };
 
