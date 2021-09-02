@@ -150,6 +150,7 @@
   let trackerbarHeight;
   let animationEaseInterval;
   let osdNavDisplayRegion;
+  let svg; // Roll SVG overlay
 
   const annotateHoleData = (holeData) => {
     const velocities = holeData.map(({ v }) => v).filter((v) => v);
@@ -235,7 +236,7 @@
     const { holeData } = $rollMetadata;
     if (!holeData) return;
 
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
     const entireViewportRectangle = viewport.imageToViewportRectangle(
@@ -388,6 +389,15 @@
     );
   };
 
+  const updateOverlaySvg = (svgOnOff) => {
+    if (svgOnOff && viewport !== undefined) {
+      createHolesOverlaySvg();
+    } else if (svg) {
+      viewport.viewer.removeOverlay(svg);
+      svg = null;
+    }
+  };
+
   onMount(async () => {
     openSeadragon = OpenSeadragon({
       id: "roll-viewer",
@@ -476,7 +486,7 @@
     // create the holes overlay SVG and "rewind" to the beginning of the
     //  performance when the viewport updates for the first time
     openSeadragon.addOnceHandler("update-viewport", () => {
-      createHolesOverlaySvg();
+      updateOverlaySvg($userSettings.highlightEnabledHoles);
       updateViewportFromTick(0);
     });
 
@@ -560,6 +570,7 @@
     ? parseInt($rollMetadata.FIRST_HOLE, 10)
     : parseInt($rollMetadata.IMAGE_LENGTH, 10) -
       parseInt($rollMetadata.FIRST_HOLE, 10);
+  $: updateOverlaySvg($userSettings.highlightEnabledHoles);
 
   export { updateTickByViewportIncrement };
 </script>
