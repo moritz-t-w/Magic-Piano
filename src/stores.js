@@ -39,6 +39,8 @@ export const accentOnOff = createStore(false);
 export const sustainFromExternalMidi = createStore(false);
 export const softFromExternalMidi = createStore(false);
 
+export const noteVelocities = createStore({});
+
 // Playback Settings
 export const volumeCoefficient = createStore(1.5);
 export const bassVolumeCoefficient = createStore(1);
@@ -47,6 +49,7 @@ export const trebleVolumeCoefficient = createStore(1);
 export const tempoCoefficient = createStore(1);
 
 export const playExpressionsOnOff = createStore(true);
+export const inAppExpressionsOnOff = createStore(false);
 export const rollPedalingOnOff = createStore(true);
 export const useMidiTempoEventsOnOff = createStore(true);
 

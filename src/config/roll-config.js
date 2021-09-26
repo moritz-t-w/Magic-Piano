@@ -1,3 +1,48 @@
+export const getExpressionParams = (rollType) => {
+  let expParams = null;
+  if (rollType === "welte-red") {
+    expParams = {
+      welte_p: 35.0,
+      welte_mf: 60.0,
+      welte_f: 90.0,
+      welte_loud: 75.0,
+      left_adjust: -5.0,
+      cresc_rate: 1.0,
+      slow_decay_rate: 2380, // Probably this is 1 velocity step in 2.38s
+      fastC_decay_rate: 300,
+      fastD_decay_rate: 400,
+    };
+    expParams.slow_step =
+      (expParams.welte_mf - expParams.welte_p) / expParams.slow_decay_rate;
+    expParams.fastC_step =
+      (expParams.welte_mf - expParams.welte_p) / expParams.fastC_decay_rate;
+    expParams.fastD_step =
+      -(expParams.welte_f - expParams.welte_p) / expParams.fastD_decay_rate;
+    return expParams;
+  }
+  return expParams;
+};
+
+export const getExpressionStateBox = (rollType) => {
+  let expState = null;
+  if (rollType === "welte-red") {
+    expState = {
+      velocity: 0.0, // Velocity at last cresc/decresc event
+      time: 0.0, // Time (in ms) at last cresc/decresc event
+      mf_start: null,
+      slow_cresc_start: null,
+      slow_decresc_start: null,
+      fast_cresc_start: null,
+      fast_cresc_stop: null, // Can be in the future due to tracker extension
+      fast_decresc_start: null,
+      fast_decresc_stop: null,
+      tempo: null,
+      tick: 0,
+    };
+  }
+  return expState;
+};
+
 export const rollProfile = {
   "welte-red": {
     bassCtrlBegin: 14,
