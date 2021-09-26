@@ -93,10 +93,22 @@
     currentTick,
     userSettings,
     playExpressionsOnOff,
+    inAppExpressionsOnOff,
     rollPedalingOnOff,
     playbackProgress,
+    noteVelocities,
   } from "../stores";
-  import { clamp, getHoleLabel } from "../lib/utils";
+  import {
+    clamp,
+    getHoleLabel,
+    pedalHoleColor,
+    controlHoleColor,
+    defaultHoleColor,
+    getHoleType,
+    holeColorMap,
+    mapToRange,
+    normalizeInRange,
+  } from "../lib/utils";
   import RollViewerControls from "./RollViewerControls.svelte";
   import RollViewerScaleBar from "./RollViewerScaleBar.svelte";
 
@@ -128,6 +140,87 @@
   let visibleSvgs = [];
   let entireViewportRectangle;
 
+  const calculateHoleColors = (holeData, noteData, inAppExpression) => {
+    if (holeData === undefined) return;
+
+    console.log("Calculating hole colors");
+
+    let minNoteVelocity = 64;
+    let maxNoteVelocity = 64;
+    firstHolePx = $scrollDownwards
+      ? parseInt($rollMetadata.FIRST_HOLE, 10)
+      : parseInt($rollMetadata.IMAGE_LENGTH, 10) -
+        parseInt($rollMetadata.FIRST_HOLE, 10);
+    if (inAppExpression && Object.keys(noteData).length) {
+      for (let tick in noteData) {
+        for (let midiKey in noteData[tick]) {
+          minNoteVelocity = Math.min(noteData[tick][midiKey], minNoteVelocity);
+          maxNoteVelocity = Math.max(noteData[tick][midiKey], maxNoteVelocity);
+        }
+      }
+    } else {
+      const velocities = holeData.map(({ v }) => v).filter((v) => v);
+      minNoteVelocity = Math.min(...velocities);
+      maxNoteVelocity = Math.max(...velocities);
+    }
+    console.log(
+      "Min velocity",
+      minNoteVelocity,
+      "max velocity",
+      maxNoteVelocity,
+    );
+    const getNoteHoleColor = ({ v: velocity, m: midiKey, y: offsetY }) => {
+      if (
+        inAppExpression &&
+        offsetY - firstHolePx in noteData &&
+        midiKey in noteData[offsetY - firstHolePx]
+      ) {
+        velocity = noteData[offsetY - firstHolePx][midiKey];
+      }
+      return holeColorMap[
+        Math.round(
+          mapToRange(
+            normalizeInRange(velocity, minNoteVelocity, maxNoteVelocity),
+            0,
+            holeColorMap.length - 1,
+          ),
+        )
+      ];
+    };
+
+    holeData.forEach((hole) => {
+      switch (getHoleType(hole, $rollMetadata.ROLL_TYPE)) {
+        case "pedal":
+          hole.color = pedalHoleColor;
+          hole.type = "pedal";
+          break;
+        case "control":
+          hole.color = controlHoleColor;
+          hole.type = "control";
+          break;
+        case "note":
+          if (
+            inAppExpression &&
+            hole.y - firstHolePx in noteData &&
+            hole.m in noteData[hole.y - firstHolePx]
+          ) {
+            hole.V =
+              Math.round(
+                (noteData[hole.y - firstHolePx][hole.m] + Number.EPSILON) * 100,
+              ) / 100;
+          } else {
+            hole.V = "?";
+          }
+          hole.color = getNoteHoleColor(hole);
+          hole.type = "note";
+          break;
+        default:
+          hole.color = defaultHoleColor;
+      }
+    });
+    partitionHolesOverlaySvgs();
+  };
+
   const createMark = (hole) => {
     const {
       x: offsetX,
@@ -136,6 +229,7 @@
       h: height,
       m: midiKey,
       v: velocity,
+      V: inAppVelocity,
       color: holeColor,
       type: holeType,
     } = hole;
@@ -143,7 +237,9 @@
 
     const holeLabel = getHoleLabel(midiKey, $rollMetadata.ROLL_TYPE);
     mark.dataset.holeLabel = holeLabel;
-    if (holeType === "note") mark.dataset.noteVelocity = velocity || 64;
+    if (holeType === "note") {
+      mark.dataset.noteVelocity = `${velocity || "64"} ${inAppVelocity || "?"}`;
+    }
 
     mark.style.setProperty("--highlight-color", `hsl(${holeColor})`);
     mark.classList.add(holeType);
@@ -216,7 +312,9 @@
   };
 
   const partitionHolesOverlaySvgs = () => {
-    if (!holeData) return;
+    if (!holeData || viewport === undefined) return;
+
+    console.log("Partitioning holes overlay SVGs");
 
     entireViewportRectangle = viewport.imageToViewportRectangle(
       0,
@@ -480,7 +578,8 @@
     // create the holes overlay SVG and "rewind" to the beginning of the
     //  performance when the viewport updates for the first time
     openSeadragon.addOnceHandler("update-viewport", () => {
-      partitionHolesOverlaySvgs();
+      calculateHoleColors(holeData, $noteVelocities, $inAppExpressionsOnOff);
+      //partitionHolesOverlaySvgs();
       updateViewportFromTick(0);
     });
 
@@ -564,6 +663,7 @@
 
   $: updateViewportFromTick($currentTick);
   $: highlightHoles($currentTick);
+  $: calculateHoleColors(holeData, $noteVelocities, $inAppExpressionsOnOff);
   $: imageLength = parseInt($rollMetadata.IMAGE_LENGTH, 10);
   $: imageWidth = parseInt($rollMetadata.IMAGE_WIDTH, 10);
   $: avgHoleWidth = parseInt($rollMetadata.AVG_HOLE_WIDTH, 10);

@@ -32,6 +32,8 @@
 
   let webMidi;
 
+  import { rollProfile } from "../config/roll-config";
+
   let tempoMap;
   let pedalingMap;
   let notesMap;
@@ -42,7 +44,6 @@
   const DEFAULT_NOTE_VELOCITY = 50.0;
   const DEFAULT_TEMPO = 60;
   const SOFT_PEDAL_RATIO = 0.67;
-  const HALF_BOUNDARY = 66; // F# above Middle C; divides the keyboard into two "pans"
   const ACCENT_BUMP = 1.5;
 
   const dispatch = createEventDispatcher();

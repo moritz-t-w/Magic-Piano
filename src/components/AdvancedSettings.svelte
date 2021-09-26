@@ -40,6 +40,7 @@
   import {
     rollHasExpressions,
     playExpressionsOnOff,
+    inAppExpressionsOnOff,
     rollPedalingOnOff,
     useMidiTempoEventsOnOff,
     userSettings,
@@ -85,7 +86,15 @@
         disabled={!$rollHasExpressions}
       />
     </div>
-    <div class="setting">
+    <div>
+      In-App Expression:
+      <input
+        type="checkbox"
+        bind:checked={$inAppExpressionsOnOff}
+        disabled={!$rollHasExpressions}
+      />
+    </div>
+    <div>
       Use Roll Pedaling:
       <input
         type="checkbox"

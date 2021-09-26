@@ -67,7 +67,8 @@
     userSettings,
   } from "./stores";
   import { annotateHoleData, clamp } from "./lib/utils";
-  import SamplePlayer from "./components/SamplePlayer.svelte";
+  //import SamplePlayer from "./components/SamplePlayer.svelte";
+  import ExpressionBox from "./components/ExpressionBox.svelte";
   import RollSelector from "./components/RollSelector.svelte";
   import RollDetails from "./components/RollDetails.svelte";
   import RollViewer from "./components/RollViewer.svelte";
@@ -177,7 +178,7 @@
   };
 
   const loadRoll = (roll) => {
-    mididataReady = fetch(`./midi/${roll.druid}.mid`)
+    mididataReady = fetch(`./midi/${roll.druid}_note.mid`)
       .then((mididataResponse) => {
         if (mididataResponse.status === 200)
           return mididataResponse.arrayBuffer();
@@ -206,7 +207,7 @@
       ([, metadataJson]) => {
         metadata = (({ holeData: _, ...obj }) => obj)(metadataJson);
         holeData = metadataJson.holeData;
-        annotateHoleData(holeData, $rollMetadata, $scrollDownwards);
+        //annotateHoleData(holeData, $rollMetadata.ROLL_TYPE);
         buildHolesIntervalTree();
         $playExpressionsOnOff = $isReproducingRoll;
         $rollPedalingOnOff = $isReproducingRoll;
@@ -313,19 +314,18 @@
   {/if}
   <LoadingSpinner showLoadingSpinner={appWaiting} />
 </div>
-<SamplePlayer
-  bind:this={samplePlayer}
-  on:loading={({ detail: loadingSamples }) => {
-    appWaiting = true;
-    loadingSamples.then(() => (appWaiting = false)).catch(() => {});
-  }}
-/>
 <KeyboardShortcuts
   {playPauseApp}
   {stopApp}
   {updateTickByViewportIncrement}
   {panHorizontal}
 />
+<!-- <SamplePlayer bind:this={samplePlayer} /> -->
+<ExpressionBox bind:this={samplePlayer}
+on:loading={({ detail: loadingSamples }) => {
+  appWaiting = true;
+  loadingSamples.then(() => (appWaiting = false)).catch(() => {});
+}} />
 <KeyboardShortcutEditor />
 <Notification />
 {#if $showWelcomeScreen}<Welcome />{/if}
