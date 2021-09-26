@@ -97,6 +97,8 @@
     rollPedalingOnOff,
     playbackProgress,
     noteVelocities,
+    bassExpCurve,
+    trebleExpCurve,
   } from "../stores";
   import {
     clamp,
@@ -139,11 +141,10 @@
   let svgPartitions;
   let visibleSvgs = [];
   let entireViewportRectangle;
+  let expressionCurvesSvg;
 
   const calculateHoleColors = (holeData, noteData, inAppExpression) => {
     if (holeData === undefined) return;
-
-    console.log("Calculating hole colors");
 
     let minNoteVelocity = 64;
     let maxNoteVelocity = 64;
@@ -151,7 +152,7 @@
       ? parseInt($rollMetadata.FIRST_HOLE, 10)
       : parseInt($rollMetadata.IMAGE_LENGTH, 10) -
         parseInt($rollMetadata.FIRST_HOLE, 10);
-    if (inAppExpression && Object.keys(noteData).length) {
+    if (inAppExpression && noteData !== null && Object.keys(noteData).length) {
       for (let tick in noteData) {
         for (let midiKey in noteData[tick]) {
           minNoteVelocity = Math.min(noteData[tick][midiKey], minNoteVelocity);
@@ -172,6 +173,7 @@
     const getNoteHoleColor = ({ v: velocity, m: midiKey, y: offsetY }) => {
       if (
         inAppExpression &&
+        noteData !== null &&
         offsetY - firstHolePx in noteData &&
         midiKey in noteData[offsetY - firstHolePx]
       ) {
@@ -201,6 +203,7 @@
         case "note":
           if (
             inAppExpression &&
+            noteData !== null &&
             hole.y - firstHolePx in noteData &&
             hole.m in noteData[hole.y - firstHolePx]
           ) {
@@ -265,6 +268,107 @@
     return mark;
   };
 
+  const drawExpressionCurves = (bassExpCurve, trebleExpCurve) => {
+    if (
+      viewport === undefined ||
+      bassExpCurve === null ||
+      trebleExpCurve === null
+    )
+      return;
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+
+    svg.setAttribute("width", imageWidth);
+    svg.setAttribute("height", imageLength);
+    svg.setAttribute("viewBox", `0 0 ${imageWidth} ${imageLength}`);
+    svg.setAttribute("style", "pointer-events: none;"); // needed?
+    svg.appendChild(g);
+
+    // Drawing the curves as paths may be more desirable if they will ever
+    // actually incorporate curves, rather than straight lines (for which
+    // polylines are sufficient)
+    // const getExpCurvePathStr = (expCurve) => {
+    //   let pathStr = `"M ${expCurve[0][1]} ${expCurve[0][0]}`;
+    //   for (let i = 1; i < expCurve.length; i++) {
+    //     pathStr = `${pathStr} L ${expCurve[i][1]} ${expCurve[i][0]}`;
+    //   }
+    //   pathStr = `${pathStr}"`;
+    //   return pathStr;
+    // };
+
+    const drawExpCurvePL = (expCurve, pl, svg) => {
+      for (let i = 0; i < expCurve.length; i++) {
+        let point = svg.createSVGPoint();
+        point.x = expCurve[i][1];
+        point.y = expCurve[i][0];
+        pl.points.appendItem(point);
+      }
+    };
+
+    // Roll images are slightly offset to the right (sigh). This could be used
+    // to compensate. But at present, it's just being used as a kluge to push
+    // the expression curves closer to the center of the viewer
+    const scanOffset = 150;
+
+    const horizOffset = Math.round(imageWidth / 2);
+    const curveRegionWidth = Math.round(imageWidth / 2);
+    const horizScale = Math.round(curveRegionWidth / 127);
+    const vertOffset = scrollDownwards
+      ? firstHolePx
+      : imageLength - firstHolePx;
+    const vertScale = scrollDownwards ? 1 : -1;
+
+    const bassPL = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "polyline",
+    );
+    bassPL.setAttribute("style", "stroke:green;fill:none;stroke-width:3;");
+    drawExpCurvePL(bassExpCurve, bassPL, svg);
+    bassPL.setAttribute(
+      "transform",
+      `translate(${scanOffset} ${vertOffset}) scale(${horizScale} ${vertScale})`,
+    );
+
+    g.appendChild(bassPL);
+
+    const treblePL = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "polyline",
+    );
+    treblePL.setAttribute("style", "stroke:green;fill:none;stroke-width:3;");
+    drawExpCurvePL(trebleExpCurve, treblePL, svg);
+    treblePL.setAttribute(
+      "transform",
+      `translate(${
+        horizOffset * 2 - scanOffset
+      } ${vertOffset}) scale(${-horizScale} ${vertScale})`,
+    );
+
+    g.appendChild(treblePL);
+
+    // How it would be done with paths rather than polylines
+    //g.appendChild(bassPath);
+    // const treblePath = document.createElementNS(
+    //   "http://www.w3.org/2000/svg",
+    //   "path",
+    // );
+    // treblePath.setAttribute("d", getExpCurvePathStr(trebleExpCurve));
+    // treblePath.setAttribute("style", "stroke:green;fill:none;stroke-width:10;");
+    // treblePath.setAttribute(
+    //   "transform",
+    //   `"translate(${horizOffset} ${vertOffset}) scale(${horizScale} ${vertScale})"`,
+    // );
+    //g.appendChild(treblePath);
+
+    if (expressionCurvesSvg !== undefined) {
+      viewport.viewer.removeOverlay(expressionCurvesSvg);
+    }
+
+    expressionCurvesSvg = svg;
+    viewport.viewer.addOverlay(svg, entireViewportRectangle);
+  };
+
   const createHolesOverlaySvg = (holes) => {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -313,8 +417,6 @@
 
   const partitionHolesOverlaySvgs = () => {
     if (!holeData || viewport === undefined) return;
-
-    console.log("Partitioning holes overlay SVGs");
 
     entireViewportRectangle = viewport.imageToViewportRectangle(
       0,
@@ -579,7 +681,7 @@
     //  performance when the viewport updates for the first time
     openSeadragon.addOnceHandler("update-viewport", () => {
       calculateHoleColors(holeData, $noteVelocities, $inAppExpressionsOnOff);
-      //partitionHolesOverlaySvgs();
+      drawExpressionCurves($bassExpCurve, $trebleExpCurve);
       updateViewportFromTick(0);
     });
 
@@ -664,6 +766,7 @@
   $: updateViewportFromTick($currentTick);
   $: highlightHoles($currentTick);
   $: calculateHoleColors(holeData, $noteVelocities, $inAppExpressionsOnOff);
+  $: drawExpressionCurves($bassExpCurve, $trebleExpCurve);
   $: imageLength = parseInt($rollMetadata.IMAGE_LENGTH, 10);
   $: imageWidth = parseInt($rollMetadata.IMAGE_WIDTH, 10);
   $: avgHoleWidth = parseInt($rollMetadata.AVG_HOLE_WIDTH, 10);

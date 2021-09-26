@@ -18,6 +18,8 @@
     activeNotes,
     currentTick,
     noteVelocities,
+    bassExpCurve,
+    trebleExpCurve,
   } from "../stores";
   import { clamp, getHoleType, getKeyByValue } from "../lib/utils";
   import {
@@ -171,6 +173,9 @@
   const buildPedalingMap = (musicTracks) => {
     const _pedalingMap = new IntervalTree();
 
+    // For 65-note rolls, or any weird MIDI input file with only 1 note track
+    if (musicTracks.length == 1) return _pedalingMap;
+
     const registerPedalEvents = (track, pedal_on, pedal_off) => {
       let tickOn = false;
       track
@@ -215,8 +220,12 @@
         });
     };
 
-    registerNoteEvents(musicTracks[2]);
-    registerNoteEvents(musicTracks[3]);
+    // For 65-note rolls, or any weird MIDI input file with only 1 note track
+    if (musicTracks.length == 1) registerNoteEvents(musicTracks[0]);
+    else {
+      registerNoteEvents(musicTracks[2]);
+      registerNoteEvents(musicTracks[3]);
+    }
 
     return _notesMap;
   };
@@ -318,10 +327,16 @@
 
   const buildExpressionMap = (musicTracks) => {
     const expParams = getExpressionParams($rollMetadata.ROLL_TYPE);
+
+    if (expParams === null) return [null, null, null];
+
     const _expressionMap = {};
 
     const buildPanExpMap = (noteTrackMsgs, ctrlTrackMsgs, adjust) => {
       const expState = getExpressionStateBox($rollMetadata.ROLL_TYPE);
+
+      let expressionCurve = [];
+
       expState.velocity = expParams.welte_p;
 
       const panMsgs = ctrlTrackMsgs
@@ -396,16 +411,22 @@
           expState.tick = tick;
           expState.time = msgTime;
           expState.velocity = panVelocity;
+          expressionCurve.push([tick, panVelocity]);
         }
       });
+      return expressionCurve;
     };
 
     // bass notes and control holes
-    buildPanExpMap(musicTracks[0], musicTracks[2], expParams.left_adjust);
+    const bassExpCurve = buildPanExpMap(
+      musicTracks[0],
+      musicTracks[2],
+      expParams.left_adjust,
+    );
     // treble notes and control holes
-    buildPanExpMap(musicTracks[1], musicTracks[3], 0);
+    const trebleExpCurve = buildPanExpMap(musicTracks[1], musicTracks[3], 0);
 
-    return _expressionMap;
+    return [_expressionMap, bassExpCurve, trebleExpCurve];
   };
 
   midiSamplePlayer.on("fileLoaded", () => {
@@ -450,25 +471,14 @@
 
     midiTPQ = midiSamplePlayer.getDivision().division;
 
-    //console.log($rollMetadata);
-
-    //console.log(midiSamplePlayer.tracks);
-
-    console.log("Building tempoMap");
-
     tempoMap = buildTempoMap(metadataTrack);
-
-    console.log("Building pedalingMap");
 
     pedalingMap = buildPedalingMap(musicTracks);
 
-    console.log("Building notesMap");
-
     notesMap = buildNotesMap(musicTracks);
 
-    console.log("Building expressionMap");
-
-    $noteVelocities = buildExpressionMap(musicTracks);
+    [$noteVelocities, $bassExpCurve, $trebleExpCurve] =
+      buildExpressionMap(musicTracks);
   });
 
   midiSamplePlayer.on("playing", ({ tick }) => {
@@ -500,9 +510,10 @@
             stopNote(midiNumber, `+${trackerExtensionSeconds}`);
             activeNotes.delete(midiNumber);
           } else {
-            const noteVelocity = $playExpressionsOnOff
-              ? $noteVelocities[tick][midiNumber]
-              : DEFAULT_NOTE_VELOCITY;
+            const noteVelocity =
+              $playExpressionsOnOff && $noteVelocities !== null
+                ? $noteVelocities[tick][midiNumber]
+                : DEFAULT_NOTE_VELOCITY;
 
             // console.log(
             //   noteName,

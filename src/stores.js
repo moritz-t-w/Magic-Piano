@@ -78,6 +78,9 @@ export const velocityCurveHigh = createPersistedStore(
 // MIDI Devices
 export const midiInputs = createStore([]);
 export const midiOutputs = createStore([]);
+// Expression Curves
+export const bassExpCurve = createStore();
+export const trebleExpCurve = createStore();
 
 // Playback State
 export const currentTick = createStore(0);
