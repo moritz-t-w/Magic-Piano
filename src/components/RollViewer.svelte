@@ -111,6 +111,7 @@
     mapToRange,
     normalizeInRange,
   } from "../lib/utils";
+  import { getExpressionParams } from "../config/roll-config";
   import RollViewerControls from "./RollViewerControls.svelte";
   import RollViewerScaleBar from "./RollViewerScaleBar.svelte";
 
@@ -319,11 +320,40 @@
       : imageLength - firstHolePx;
     const vertScale = scrollDownwards ? 1 : -1;
 
+    const expParams = getExpressionParams($rollMetadata.ROLL_TYPE);
+    if (expParams === null) return;
+
+    const guides = {
+      p: parseInt(expParams.welte_p),
+      mf: parseInt(expParams.welte_mf),
+      f: parseInt(expParams.welte_f),
+    };
+
+    for (const [key, value] of Object.entries(guides)) {
+      const guideLine = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "line",
+      );
+      guideLine.setAttribute(
+        "style",
+        "stroke:palegreen;fill:none;stroke-width:1;opacity:25%;",
+      );
+      guideLine.setAttribute("x1", value);
+      guideLine.setAttribute("x2", value);
+      guideLine.setAttribute("y1", 0);
+      guideLine.setAttribute("y2", imageLength - firstHolePx);
+      guideLine.setAttribute(
+        "transform",
+        `translate(${scanOffset} ${vertOffset}) scale(${horizScale} ${vertScale})`,
+      );
+      g.appendChild(guideLine);
+    }
+
     const bassPL = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "polyline",
     );
-    bassPL.setAttribute("style", "stroke:green;fill:none;stroke-width:3;");
+    bassPL.setAttribute("style", "stroke:green;fill:none;stroke-width:2;");
     drawExpCurvePL(bassExpCurve, bassPL, svg);
     bassPL.setAttribute(
       "transform",
@@ -332,11 +362,33 @@
 
     g.appendChild(bassPL);
 
+    for (const [key, value] of Object.entries(guides)) {
+      const guideLine = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "line",
+      );
+      guideLine.setAttribute(
+        "style",
+        "stroke:palegreen;fill:none;stroke-width:1;opacity:25%;",
+      );
+      guideLine.setAttribute("x1", value);
+      guideLine.setAttribute("x2", value);
+      guideLine.setAttribute("y1", 0);
+      guideLine.setAttribute("y2", imageLength - firstHolePx);
+      guideLine.setAttribute(
+        "transform",
+        `translate(${
+          horizOffset * 2 - scanOffset
+        } ${vertOffset}) scale(${-horizScale} ${vertScale})`,
+      );
+      g.appendChild(guideLine);
+    }
+
     const treblePL = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "polyline",
     );
-    treblePL.setAttribute("style", "stroke:green;fill:none;stroke-width:3;");
+    treblePL.setAttribute("style", "stroke:green;fill:none;stroke-width:2;");
     drawExpCurvePL(trebleExpCurve, treblePL, svg);
     treblePL.setAttribute(
       "transform",
