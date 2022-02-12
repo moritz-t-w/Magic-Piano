@@ -207,7 +207,11 @@
       ([, metadataJson]) => {
         metadata = (({ holeData: _, ...obj }) => obj)(metadataJson);
         holeData = metadataJson.holeData;
+<<<<<<< HEAD
         //annotateHoleData(holeData, $rollMetadata.ROLL_TYPE);
+=======
+        annotateHoleData(holeData, $rollMetadata, $scrollDownwards);
+>>>>>>> 91f4f9a (Toggle in-app expression viz on off)
         buildHolesIntervalTree();
         $playExpressionsOnOff = $isReproducingRoll;
         $rollPedalingOnOff = $isReproducingRoll;
@@ -314,18 +318,20 @@
   {/if}
   <LoadingSpinner showLoadingSpinner={appWaiting} />
 </div>
+<!-- <SamplePlayer bind:this={samplePlayer} /> -->
+<ExpressionBox
+  bind:this={samplePlayer}
+  on:loading={({ detail: loadingSamples }) => {
+    appWaiting = true;
+    loadingSamples.then(() => (appWaiting = false)).catch(() => {});
+  }}
+/>
 <KeyboardShortcuts
   {playPauseApp}
   {stopApp}
   {updateTickByViewportIncrement}
   {panHorizontal}
 />
-<!-- <SamplePlayer bind:this={samplePlayer} /> -->
-<ExpressionBox bind:this={samplePlayer}
-on:loading={({ detail: loadingSamples }) => {
-  appWaiting = true;
-  loadingSamples.then(() => (appWaiting = false)).catch(() => {});
-}} />
 <KeyboardShortcutEditor />
 <Notification />
 {#if $showWelcomeScreen}<Welcome />{/if}

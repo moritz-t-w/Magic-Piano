@@ -223,6 +223,7 @@
       }
     });
     partitionHolesOverlaySvgs();
+    updateVisibleSvgPartitions();
   };
 
   const createMark = (hole) => {
@@ -269,11 +270,16 @@
     return mark;
   };
 
-  const drawExpressionCurves = (bassExpCurve, trebleExpCurve) => {
+  const drawExpressionCurves = (bassExpCurve, trebleExpCurve, inAppExpressionsOnOff) => {
+    if (expressionCurvesSvg !== undefined) {
+      viewport.viewer.removeOverlay(expressionCurvesSvg);
+    }
+
     if (
       viewport === undefined ||
       bassExpCurve === null ||
-      trebleExpCurve === null
+      trebleExpCurve === null ||
+      !inAppExpressionsOnOff
     )
       return;
 
@@ -412,10 +418,6 @@
     //   `"translate(${horizOffset} ${vertOffset}) scale(${horizScale} ${vertScale})"`,
     // );
     //g.appendChild(treblePath);
-
-    if (expressionCurvesSvg !== undefined) {
-      viewport.viewer.removeOverlay(expressionCurvesSvg);
-    }
 
     expressionCurvesSvg = svg;
     viewport.viewer.addOverlay(svg, entireViewportRectangle);
@@ -733,7 +735,7 @@
     //  performance when the viewport updates for the first time
     openSeadragon.addOnceHandler("update-viewport", () => {
       calculateHoleColors(holeData, $noteVelocities, $inAppExpressionsOnOff);
-      drawExpressionCurves($bassExpCurve, $trebleExpCurve);
+      drawExpressionCurves($bassExpCurve, $trebleExpCurve, $inAppExpressionsOnOff);
       updateViewportFromTick(0);
     });
 
@@ -818,7 +820,7 @@
   $: updateViewportFromTick($currentTick);
   $: highlightHoles($currentTick);
   $: calculateHoleColors(holeData, $noteVelocities, $inAppExpressionsOnOff);
-  $: drawExpressionCurves($bassExpCurve, $trebleExpCurve);
+  $: drawExpressionCurves($bassExpCurve, $trebleExpCurve, $inAppExpressionsOnOff);
   $: imageLength = parseInt($rollMetadata.IMAGE_LENGTH, 10);
   $: imageWidth = parseInt($rollMetadata.IMAGE_WIDTH, 10);
   $: avgHoleWidth = parseInt($rollMetadata.AVG_HOLE_WIDTH, 10);
@@ -838,7 +840,7 @@
   id="roll-viewer"
   on:mouseenter={() => (showControls = true)}
   on:mouseleave={() => (showControls = false)}
-  on:wheel|capture|preventDefault={(event) => {
+  on:wheel|capture|preventDefault={event => {
     if (event.ctrlKey) {
       updateTickByViewportIncrement(/* up = */ event.deltaY < 0);
       event.stopPropagation();
