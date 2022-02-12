@@ -41,6 +41,8 @@ export const softFromExternalMidi = createStore(false);
 
 export const noteVelocities = createStore({});
 
+export const expressionParameters = createStore({});
+
 // Playback Settings
 export const volumeCoefficient = createStore(1.5);
 export const bassVolumeCoefficient = createStore(1);

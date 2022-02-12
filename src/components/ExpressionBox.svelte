@@ -20,6 +20,7 @@
     noteVelocities,
     bassExpCurve,
     trebleExpCurve,
+    expressionParameters,
   } from "../stores";
   import { clamp, getHoleType, getKeyByValue } from "../lib/utils";
   import {
@@ -326,9 +327,12 @@
   };
 
   const buildExpressionMap = (musicTracks) => {
+
     const expParams = getExpressionParams($rollMetadata.ROLL_TYPE);
 
     if (expParams === null) return [null, null, null];
+
+    $expressionParameters = expParams;
 
     const _expressionMap = {};
 
