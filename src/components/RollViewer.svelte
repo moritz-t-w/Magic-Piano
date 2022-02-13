@@ -165,12 +165,6 @@
       minNoteVelocity = Math.min(...velocities);
       maxNoteVelocity = Math.max(...velocities);
     }
-    console.log(
-      "Min velocity",
-      minNoteVelocity,
-      "max velocity",
-      maxNoteVelocity,
-    );
     const getNoteHoleColor = ({ v: velocity, m: midiKey, y: offsetY }) => {
       if (
         inAppExpression &&

@@ -33,6 +33,8 @@
   let tempoMap;
   let pedalingMap;
   let notesMap;
+  let metadataTrack;
+  let musicTracks;
 
   const TRACKERBAR_DIAMETER = 16.7; // try AVG_HOLE_WIDTH instead?
   const PUNCH_EXTENSION_FRACTION = 0.75;
@@ -328,11 +330,11 @@
 
   const buildExpressionMap = (musicTracks) => {
 
-    const expParams = getExpressionParams($rollMetadata.ROLL_TYPE);
+    if (!$expressionParameters || Object.keys($expressionParameters).length === 0) {
+      $expressionParameters = getExpressionParams($rollMetadata.ROLL_TYPE);
+    }
 
-    if (expParams === null) return [null, null, null];
-
-    $expressionParameters = expParams;
+    if ($expressionParameters === null || musicTracks === null) return;
 
     const _expressionMap = {};
 
@@ -341,7 +343,7 @@
 
       let expressionCurve = [];
 
-      expState.velocity = expParams.welte_p;
+      expState.velocity = $expressionParameters.welte_p;
 
       const panMsgs = ctrlTrackMsgs
         .filter(({ name }) => name === "Note on")
@@ -369,7 +371,7 @@
           // Only apply adjustment (if at all) on the external (played)
           // velocities, not the interally stored/computed expressions
           const noteVelocity =
-            getVelocityAtTime(msgTime, expState, expParams) + adjust;
+            getVelocityAtTime(msgTime, expState, $expressionParameters) + adjust;
 
           if (tick in _expressionMap) {
             _expressionMap[tick][midiNumber] = noteVelocity;
@@ -383,7 +385,7 @@
           if (velocity === 0 && !["sf_on", "sf_off"].includes(ctrlFunc)) {
             return;
           }
-          const panVelocity = getVelocityAtTime(msgTime, expState, expParams);
+          const panVelocity = getVelocityAtTime(msgTime, expState, $expressionParameters);
           const trackerExtensionSeconds = TRACKER_EXTENSION / ticksPerSecond;
           if (ctrlFunc === "mf_on" && velocity > 0) {
             expState.mf_start = msgTime;
@@ -422,15 +424,16 @@
     };
 
     // bass notes and control holes
-    const bassExpCurve = buildPanExpMap(
+    $bassExpCurve = buildPanExpMap(
       musicTracks[0],
       musicTracks[2],
-      expParams.left_adjust,
+      $expressionParameters.left_adjust,
     );
-    // treble notes and control holes
-    const trebleExpCurve = buildPanExpMap(musicTracks[1], musicTracks[3], 0);
 
-    return [_expressionMap, bassExpCurve, trebleExpCurve];
+    // treble notes and control holes
+    $trebleExpCurve = buildPanExpMap(musicTracks[1], musicTracks[3], 0);
+
+    $noteVelocities = _expressionMap;
   };
 
   midiSamplePlayer.on("fileLoaded", () => {
@@ -441,7 +444,7 @@
           String.fromCodePoint(parseInt(num, 16)),
         );
 
-    const [metadataTrack, ...musicTracks] = midiSamplePlayer.events;
+    [metadataTrack, ...musicTracks] = midiSamplePlayer.events;
 
     rollMetadata.set(
       Object.fromEntries(
@@ -481,8 +484,7 @@
 
     notesMap = buildNotesMap(musicTracks);
 
-    [$noteVelocities, $bassExpCurve, $trebleExpCurve] =
-      buildExpressionMap(musicTracks);
+    buildExpressionMap(musicTracks);
   });
 
   midiSamplePlayer.on("playing", ({ tick }) => {
@@ -518,12 +520,6 @@
               $playExpressionsOnOff && $noteVelocities !== null
                 ? $noteVelocities[tick][midiNumber]
                 : DEFAULT_NOTE_VELOCITY;
-
-            // console.log(
-            //   noteName,
-            //   noteVelocity,
-            // );
-
             startNote(midiNumber, noteVelocity);
             activeNotes.add(midiNumber);
           }
@@ -570,6 +566,7 @@
   $: $tempoCoefficient, updatePlayer();
   $: $useMidiTempoEventsOnOff, updatePlayer();
   $: $rollPedalingOnOff, updatePlayer();
+  $: $expressionParameters, buildExpressionMap(musicTracks);
 
   export {
     midiSamplePlayer,

@@ -1,25 +1,53 @@
+<style lang="scss">
+  button {
+    @include button;
+  }
+</style>
+
 <script>
-    import {
+  import {
     inAppExpressionsOnOff,
     expressionParameters,
-    rollHasExpressions
-    } from "../stores";
+    rollHasExpressions,
+    rollMetadata,
+  } from "../stores";
+  import {
+    getExpressionParams,
+  } from "../config/roll-config";
+
+  let expressionParams = $expressionParameters;
 </script>
 
 <div id="expression-panel">
   {#if $inAppExpressionsOnOff}
     <fieldset>
       <legend>Expression Settings</legend>
-      {#each Object.keys($expressionParameters) as expressionParam}
-        <label
-          >{expressionParam}
-          <input
-            type="number"
-            name={expressionParam}
-            bind:value={$expressionParameters[expressionParam]}
-          />
-        </label>
+      {#each Object.keys(expressionParams) as expressionParam}
+        <div>
+          <label
+            >{expressionParam}
+            <input
+              type="number"
+              name={expressionParam}
+              bind:value={expressionParams[expressionParam]}
+              on:change={() =>
+                ($expressionParameters[expressionParam] =
+                  expressionParams[expressionParam])}
+            />
+          </label>
+        </div>
       {/each}
+      <div id="reset-control">
+        <button
+          type="button"
+          on:click={() => {
+            $expressionParameters = getExpressionParams(
+              $rollMetadata.ROLL_TYPE,
+            );
+            expressionParams = $expressionParameters;
+          }}>Reset to Defaults</button
+        >
+      </div>
     </fieldset>
   {:else if !$rollHasExpressions}
     <fieldset>
