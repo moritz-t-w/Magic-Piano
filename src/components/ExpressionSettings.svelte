@@ -19,7 +19,7 @@
 </script>
 
 <div id="expression-panel">
-  {#if $inAppExpressionsOnOff}
+  {#if $inAppExpressionsOnOff && $rollMetadata.ROLL_TYPE == "welte-red"}
     <fieldset>
       <legend>Expression Settings</legend>
       {#each Object.keys(expressionParams) as expressionParam}
@@ -48,6 +48,11 @@
           }}>Reset to Defaults</button
         >
       </div>
+    </fieldset>
+  {:else if $inAppExpressionsOnOff && $rollMetadata.ROLL_TYPE != "welte-red"}
+    <fieldset>
+      <legend>Expression emulation not available</legend>
+      <p>Modification of expression emulation settings is not yet available for this roll type.</p>
     </fieldset>
   {:else if !$rollHasExpressions}
     <fieldset>

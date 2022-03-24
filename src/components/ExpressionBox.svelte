@@ -1,8 +1,10 @@
 <script>
+  import WebMidi from "./WebMidi.svelte";
   import MidiPlayer from "midi-player-js";
   import IntervalTree from "node-interval-tree";
-  import { Piano } from "../lib/tonejs-piano";
-
+  import { createEventDispatcher } from "svelte";
+  import { Piano } from "../lib/pianolatron-piano";
+  import { notify } from "../ui-components/Notification.svelte";
   import {
     rollMetadata,
     softOnOff,
@@ -14,20 +16,31 @@
     tempoCoefficient,
     playExpressionsOnOff,
     rollPedalingOnOff,
+    sustainFromExternalMidi,
+    softFromExternalMidi,
     useMidiTempoEventsOnOff,
     activeNotes,
     currentTick,
+    sampleVolumes,
+    sampleVelocities,
+    reverbWetDry,
     noteVelocities,
     bassExpCurve,
     trebleExpCurve,
     expressionParameters,
+    velocityCurveLow,
+    velocityCurveMid,
+    velocityCurveHigh,
+    userSettings,
   } from "../stores";
-  import { clamp, getHoleType, getKeyByValue } from "../lib/utils";
+  import { clamp, getHoleType, getKeyByValue, getKeyByValues } from "../lib/utils";
   import {
     getExpressionParams,
     getExpressionStateBox,
     rollProfile,
   } from "../config/roll-config";
+
+  let webMidi;
 
   let midiTPQ;
   let tempoMap;
@@ -47,27 +60,31 @@
   let SOFT_PEDAL_OFF;
   let SUSTAIN_PEDAL_ON;
   let SUSTAIN_PEDAL_OFF;
+  let HALF_BOUNDARY;
 
   const DEFAULT_NOTE_VELOCITY = 50.0;
   const DEFAULT_TEMPO = 60;
   const SOFT_PEDAL_RATIO = 0.67;
   const ACCENT_BUMP = 1.5;
 
+  const dispatch = createEventDispatcher();
+
   const midiSamplePlayer = new MidiPlayer.Player();
 
   const piano = new Piano({
     url: "samples/",
-    velocities: 4,
+    velocities: $sampleVelocities,
     release: true,
     pedal: true,
     maxPolyphony: Infinity,
     volume: {
-      strings: -15,
-      harmonics: -10,
-      pedal: -10,
-      keybed: -10,
+      strings: $sampleVolumes.strings,
+      harmonics: $sampleVolumes.harmonics,
+      pedal: $sampleVolumes.pedal,
+      keybed: $sampleVolumes.keybed,
     },
-  }).toDestination();
+    reverbWet: $reverbWetDry,
+  });
 
   const pianoReady = piano.load();
 
@@ -83,6 +100,27 @@
     return tempo;
   };
 
+  const toggleSustain = (onOff, fromMidi) => {
+    if (onOff) {
+      piano.pedalDown();
+    } else {
+      piano.pedalUp();
+    }
+    if (fromMidi && $sustainFromExternalMidi) {
+      $sustainOnOff = onOff;
+    } else if (!fromMidi && !$sustainFromExternalMidi) {
+      webMidi?.sendMidiMsg("CONTROLLER", "SUSTAIN", onOff);
+    }
+  };
+
+  const toggleSoft = (onOff, fromMidi) => {
+    if (fromMidi && $softFromExternalMidi) {
+      $softOnOff = onOff;
+    } else if (!fromMidi && !$softFromExternalMidi) {
+      webMidi?.sendMidiMsg("CONTROLLER", "SOFT", onOff);
+    }
+  };
+
   const setPlayerStateAtTick = (tick = $currentTick) => {
     if (midiSamplePlayer.tracks[0])
       midiSamplePlayer.tracks[0].enabled = $useMidiTempoEventsOnOff;
@@ -94,7 +132,6 @@
       softOnOff.set(pedals.includes(SOFT_PEDAL_ON));
     } else {
       sustainOnOff.set(false);
-      piano.pedalUp();
       softOnOff.set(false);
     }
 
@@ -106,39 +143,113 @@
   const updatePlayer = (fn = () => {}) => {
     if (midiSamplePlayer.isPlaying()) {
       midiSamplePlayer.pause();
-      fn();
-      setPlayerStateAtTick($currentTick);
-      midiSamplePlayer.play();
-      return;
+      return Promise.resolve(fn()).then(() => {
+        setPlayerStateAtTick($currentTick);
+        midiSamplePlayer.play();
+      });
     }
-    fn();
-    setPlayerStateAtTick($currentTick);
+    return Promise.resolve(fn())
+      .then(() => setPlayerStateAtTick($currentTick))
+      .catch(() => {});
   };
 
-  const startNote = (noteNumber, velocity) => {
-    const modifiedVelocity =
-      ((($playExpressionsOnOff && velocity) || DEFAULT_NOTE_VELOCITY) / 100) *
-      (($softOnOff && SOFT_PEDAL_RATIO) || 1) *
-      (($accentOnOff && ACCENT_BUMP) || 1) *
-      $volumeCoefficient *
-      (noteNumber <= rollProfile[$rollMetadata.ROLL_TYPE].bassNotesEnd
-        ? $bassVolumeCoefficient
-        : $trebleVolumeCoefficient);
+  const loadSampleVelocities = () => {
+    if ($sampleVelocities === piano.loadedVelocities) return;
+    updatePlayer(() => {
+      const loadingSamples = piano.updateVelocities($sampleVelocities);
+      dispatch("loading", loadingSamples);
+      // if samples are in the process of being loaded, the promise is
+      //  rejected; update the UI to reflect the correct value
+      loadingSamples
+        .then(() => ($sampleVelocities = piano.loadedVelocities))
+        .catch(
+          ({ loadedVelocities }) => ($sampleVelocities = loadedVelocities),
+        );
+      return loadingSamples;
+    });
+  };
+
+  const updateSampleVelocities = () => {
+    if ($sampleVelocities > 4 && $sampleVelocities > piano.loadedVelocities) {
+      notify({
+        modal: true,
+        title: "Please confirm your choice",
+        message:
+          "Increasing the sample count beyond four will consume large amounts " +
+          "of your system's memory, and could result in crashing the browser " +
+          "or even the entire system.  If you experience issues, please " +
+          "lower the count to four or lower.",
+        closable: false,
+        actions: [
+          {
+            label: "okay",
+            fn: loadSampleVelocities,
+          },
+          {
+            label: "cancel",
+            fn: () => ($sampleVelocities = piano.loadedVelocities),
+          },
+        ],
+      });
+      return;
+    }
+    loadSampleVelocities();
+  };
+
+  const startNote = (noteNumber, velocity, fromMidi) => {
+    activeNotes.add(noteNumber);
+    let baseVelocity =
+      (($playExpressionsOnOff && velocity) || DEFAULT_NOTE_VELOCITY) / 100;
+    [$velocityCurveLow, $velocityCurveMid, $velocityCurveHigh].forEach(
+      (keyboardRegion) => {
+        if (
+          keyboardRegion.velocityCurve !== null &&
+          noteNumber >= keyboardRegion.firstMidi &&
+          noteNumber <= keyboardRegion.lastMidi
+        ) {
+          [, baseVelocity] =
+            keyboardRegion.velocityCurve[
+              parseInt(keyboardRegion.velocityCurve.length * baseVelocity, 10)
+            ];
+        }
+      },
+    );
+    // Note: SOFT_PEDAL_RATIO is only applied when calling piano.keyDown() as
+    //       @tonejs/piano has so built-in soft pedaling and so we emulate in
+    //       software.  For WebMIDI outputs we send soft pedal controller
+    //       events and note velocities that are not modified for softness.
+    const modifiedVelocity = Math.min(
+      baseVelocity *
+        (($accentOnOff && ACCENT_BUMP) || 1) *
+        $volumeCoefficient *
+        (noteNumber < HALF_BOUNDARY
+          ? $bassVolumeCoefficient
+          : $trebleVolumeCoefficient),
+      1,
+    );
     if (modifiedVelocity) {
       piano.keyDown({
         midi: noteNumber,
-        velocity: Math.min(modifiedVelocity, 1),
+        velocity: modifiedVelocity * (($softOnOff && SOFT_PEDAL_RATIO) || 1),
       });
+    }
+    if (!fromMidi) {
+      webMidi?.sendMidiMsg("NOTE_ON", noteNumber, modifiedVelocity);
     }
   };
 
-  const stopNote = (noteNumber, timeDelta) =>
-    piano.keyUp({ midi: noteNumber, time: timeDelta });
+  const stopNote = (noteNumber, fromMidi) => {
+    activeNotes.delete(noteNumber);
+    piano.keyUp({ midi: noteNumber });
+    if (!fromMidi) {
+      webMidi?.sendMidiMsg("NOTE_OFF", noteNumber, 0);
+    }
+  };
 
   const stopAllNotes = () => {
     piano.pedalUp();
+    $activeNotes.forEach((midiNumber) => stopNote(midiNumber));
     if ($sustainOnOff) piano.pedalDown();
-    $activeNotes.forEach(stopNote);
   };
 
   const resetPlayback = () => {
@@ -171,9 +282,7 @@
         return _tempoMap;
       }, []);
 
-  // Get pedal events from track 0 (bass control = soft pedal) and
-  // track 1 (treble control = sustain pedal)
-  const buildPedalingMap = (musicTracks) => {
+  const buildPedalingMap = (eventsTrack) => {
     const _pedalingMap = new IntervalTree();
 
     // For 65-note rolls, or any weird MIDI input file with only 1 note track
@@ -203,7 +312,6 @@
 
   const buildNotesMap = (musicTracks) => {
     const _notesMap = new IntervalTree();
-
     const registerNoteEvents = (track) => {
       const tickOn = {};
       track
@@ -222,14 +330,12 @@
           } else if (!(noteNumber in tickOn)) tickOn[noteNumber] = tick;
         });
     };
-
     // For 65-note rolls, or any weird MIDI input file with only 1 note track
     if (musicTracks.length == 1) registerNoteEvents(musicTracks[0]);
     else {
       registerNoteEvents(musicTracks[2]);
       registerNoteEvents(musicTracks[3]);
     }
-
     return _notesMap;
   };
 
@@ -328,7 +434,11 @@
     return newVelocity;
   };
 
-  const buildExpressionMap = (musicTracks) => {
+  const buildExpressionMap = (musicTracks, reset) => {
+
+    if (reset) {
+      expressionParameters.reset();
+    }
 
     if (!$expressionParameters || Object.keys($expressionParameters).length === 0) {
       $expressionParameters = getExpressionParams($rollMetadata.ROLL_TYPE);
@@ -459,9 +569,11 @@
       ),
     );
 
-    SOFT_PEDAL_ON = getKeyByValue(
+    midiTPQ = midiSamplePlayer.getDivision().division;
+
+    SOFT_PEDAL_ON = getKeyByValues(
       rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap,
-      "soft_on",
+      ["soft_on", "soft"],
     );
     SOFT_PEDAL_OFF = getKeyByValue(
       rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap,
@@ -469,14 +581,16 @@
     );
     SUSTAIN_PEDAL_ON = getKeyByValue(
       rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap,
-      "sust_on",
+      ["sust_on", "sust"],
     );
     SUSTAIN_PEDAL_OFF = getKeyByValue(
       rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap,
       "sust_off",
     );
-
-    midiTPQ = midiSamplePlayer.getDivision().division;
+    HALF_BOUNDARY = getKeyByValue(
+      rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap,
+      "treble_notes_begin",
+    );
 
     tempoMap = buildTempoMap(metadataTrack);
 
@@ -484,7 +598,7 @@
 
     notesMap = buildNotesMap(musicTracks);
 
-    buildExpressionMap(musicTracks);
+    buildExpressionMap(musicTracks, true);
   });
 
   midiSamplePlayer.on("playing", ({ tick }) => {
@@ -514,41 +628,46 @@
             // At 591 TPQ & 60bpm, this is ~.02s, drops slowly due to accel
             const trackerExtensionSeconds = TRACKER_EXTENSION / ticksPerSecond;
             stopNote(midiNumber, `+${trackerExtensionSeconds}`);
-            activeNotes.delete(midiNumber);
           } else {
             const noteVelocity =
-              $playExpressionsOnOff && $noteVelocities !== null
+              $playExpressionsOnOff && $noteVelocities !== null && tick in $noteVelocities
                 ? $noteVelocities[tick][midiNumber]
                 : DEFAULT_NOTE_VELOCITY;
             startNote(midiNumber, noteVelocity);
-            activeNotes.add(midiNumber);
           }
         } else if (holeType === "pedal" && $rollPedalingOnOff) {
           if (velocity === 0) {
-            // Length of pedal control holes doesn't matter for red Welte
-            // (but it does for green Welte...)
-            return;
-          }
-          if (
-            rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber] ===
-            "sust_on"
-          ) {
-            sustainOnOff.set(true);
-          } else if (
-            rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber] ===
-            "sust_off"
-          ) {
-            sustainOnOff.set(false);
-          } else if (
-            rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber] ===
-            "soft_on"
-          ) {
-            softOnOff.set(true);
-          } else if (
-            rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber] ===
-            "soft_off"
-          ) {
-            softOnOff.set(false);
+            if (
+              rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber] ===
+              "sust"
+            ) {
+              sustainOnOff.set(false);
+            } else if (
+              rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber] ===
+              "soft"
+            ) {
+              softOnOff.set(false);
+            }
+          } else {
+            if (
+              ["sust_on", "sust"].includes(rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber])
+            ) {
+              sustainOnOff.set(true);
+            } else if (
+              rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber] ===
+              "sust_off"
+            ) {
+              sustainOnOff.set(false);
+            } else if (
+              ["soft_on", "soft"].includes(rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber])
+            ) {
+              softOnOff.set(true);
+            } else if (
+              rollProfile[$rollMetadata.ROLL_TYPE].ctrlMap[midiNumber] ===
+              "soft_off"
+            ) {
+              softOnOff.set(false);
+            }
           }
         }
       } else if (msgType === "Set Tempo" && $useMidiTempoEventsOnOff) {
@@ -566,7 +685,7 @@
   $: $tempoCoefficient, updatePlayer();
   $: $useMidiTempoEventsOnOff, updatePlayer();
   $: $rollPedalingOnOff, updatePlayer();
-  $: $expressionParameters, buildExpressionMap(musicTracks);
+  $: $expressionParameters, buildExpressionMap(musicTracks, false);
 
   export {
     midiSamplePlayer,
@@ -579,3 +698,13 @@
     resetPlayback,
   };
 </script>
+
+{#if $userSettings.useWebMidi}
+  <WebMidi
+    bind:this={webMidi}
+    {startNote}
+    {stopNote}
+    {toggleSustain}
+    {toggleSoft}
+  />
+{/if}

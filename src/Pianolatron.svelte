@@ -65,6 +65,8 @@
     playExpressionsOnOff,
     rollPedalingOnOff,
     userSettings,
+    expressionParameters,
+  //  inAppExpressionsOnOff,
   } from "./stores";
   import { annotateHoleData, clamp } from "./lib/utils";
   //import SamplePlayer from "./components/SamplePlayer.svelte";
@@ -207,11 +209,7 @@
       ([, metadataJson]) => {
         metadata = (({ holeData: _, ...obj }) => obj)(metadataJson);
         holeData = metadataJson.holeData;
-<<<<<<< HEAD
-        //annotateHoleData(holeData, $rollMetadata.ROLL_TYPE);
-=======
         annotateHoleData(holeData, $rollMetadata, $scrollDownwards);
->>>>>>> 91f4f9a (Toggle in-app expression viz on off)
         buildHolesIntervalTree();
         $playExpressionsOnOff = $isReproducingRoll;
         $rollPedalingOnOff = $isReproducingRoll;
@@ -319,13 +317,25 @@
   <LoadingSpinner showLoadingSpinner={appWaiting} />
 </div>
 <!-- <SamplePlayer bind:this={samplePlayer} /> -->
-<ExpressionBox
-  bind:this={samplePlayer}
-  on:loading={({ detail: loadingSamples }) => {
-    appWaiting = true;
-    loadingSamples.then(() => (appWaiting = false)).catch(() => {});
-  }}
-/>
+<!-- {#if $inAppExpressionsOnOff} -->
+  <ExpressionBox
+    bind:this={samplePlayer}
+    on:loading={({ detail: loadingSamples }) => {
+      appWaiting = true;
+      loadingSamples.then(() => (appWaiting = false)).catch(() => {});
+    }}
+  />
+<!--
+{:else}
+  <SamplePlayer
+    bind:this={samplePlayer}
+    on:loading={({ detail: loadingSamples }) => {
+      appWaiting = true;
+      loadingSamples.then(() => (appWaiting = false)).catch(() => {});
+    }}
+  />
+{/if}
+-->
 <KeyboardShortcuts
   {playPauseApp}
   {stopApp}

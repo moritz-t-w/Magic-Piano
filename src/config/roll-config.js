@@ -18,7 +18,6 @@ export const getExpressionParams = (rollType) => {
       (expParams.welte_mf - expParams.welte_p) / expParams.fastC_decay_rate;
     expParams.fastD_step =
       -(expParams.welte_f - expParams.welte_p) / expParams.fastD_decay_rate;
-    return expParams;
   }
   return expParams;
 };

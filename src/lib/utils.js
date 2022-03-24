@@ -4,6 +4,14 @@ export const getKeyByValue = (object, value) => {
   Object.keys(object).find((key) => object[key] === value);
 };
 
+// Return the key of the first matched value
+export const getKeyByValues = (object, values) => {
+  values.forEach((value) => {
+    const key = getKeyByValue(object, value);
+    if (key) return key;
+  });
+};
+
 export const enforcePrecision = (value, precision) => {
   const multiplier = 10 ** (precision || 0);
   return Math.round(value * multiplier) / multiplier;

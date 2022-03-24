@@ -44,6 +44,7 @@
   const DEFAULT_NOTE_VELOCITY = 50.0;
   const DEFAULT_TEMPO = 60;
   const SOFT_PEDAL_RATIO = 0.67;
+  const HALF_BOUNDARY = 66; // F# above Middle C; divides the keyboard into two "pans"
   const ACCENT_BUMP = 1.5;
 
   const dispatch = createEventDispatcher();
@@ -104,7 +105,6 @@
     if (midiSamplePlayer.tracks[0])
       midiSamplePlayer.tracks[0].enabled = $useMidiTempoEventsOnOff;
     midiSamplePlayer.setTempo(getTempoAtTick(tick) * $tempoCoefficient);
-
     if (pedalingMap && $rollPedalingOnOff) {
       const pedals = pedalingMap.search($currentTick, $currentTick);
       sustainOnOff.set(pedals.includes(SUSTAIN_PEDAL));
@@ -113,7 +113,6 @@
       sustainOnOff.set(false);
       softOnOff.set(false);
     }
-
     if (notesMap) {
       activeNotes.reset(notesMap.search($currentTick, $currentTick));
     }
