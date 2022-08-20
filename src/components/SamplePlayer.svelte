@@ -31,6 +31,7 @@
   import WebMidi from "./WebMidi.svelte";
 
   let webMidi;
+  let recordingDestination;
 
   let tempoMap;
   let pedalingMap;
@@ -65,6 +66,9 @@
   });
 
   const pianoReady = piano.load();
+
+  recordingDestination = piano.context.createMediaStreamDestination();
+  piano.connect(recordingDestination);
 
   const getTempoAtTick = (tick) => {
     if (!tempoMap || !$useMidiTempoEventsOnOff) return DEFAULT_TEMPO;
@@ -362,6 +366,11 @@
 
   midiSamplePlayer.on("endOfFile", pausePlayback);
 
+  const audioRecording = (action) => {
+    if (action === "clear") webMidi.clearRecording();
+    else if (action === "export") webMidi.exportRecording();
+  };
+
   /* eslint-disable no-unused-expressions, no-sequences */
   $: toggleSustain($sustainOnOff);
   $: toggleSoft($softOnOff);
@@ -381,6 +390,7 @@
     pausePlayback,
     startPlayback,
     resetPlayback,
+    audioRecording,
   };
 </script>
 
@@ -391,5 +401,6 @@
     {stopNote}
     {toggleSustain}
     {toggleSoft}
+    {recordingDestination}
   />
 {/if}

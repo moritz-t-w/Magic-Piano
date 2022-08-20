@@ -109,6 +109,7 @@
   let pausePlayback;
   let startPlayback;
   let resetPlayback;
+  let audioRecording;
 
   let rollViewer;
   let updateTickByViewportIncrement;
@@ -176,6 +177,10 @@
     bassVolumeCoefficient.reset();
     trebleVolumeCoefficient.reset();
     holesByTickInterval = new IntervalTree();
+  };
+
+  const recordingControl = (action) => {
+    audioRecording(action);
   };
 
   const loadRoll = (roll) => {
@@ -263,6 +268,7 @@
       pausePlayback,
       startPlayback,
       resetPlayback,
+      audioRecording,
     } = samplePlayer);
 
     setCurrentRollFromUrl();
@@ -318,7 +324,12 @@
       {/if}
     </div>
     <FlexCollapsible id="right-sidebar" width="20vw" position="left">
-      <TabbedPanel {playPauseApp} {stopApp} {skipToPercentage} />
+      <TabbedPanel
+        {playPauseApp}
+        {stopApp}
+        {skipToPercentage}
+        {recordingControl}
+      />
     </FlexCollapsible>
   </div>
   {#if $userSettings.showKeyboard && !$userSettings.overlayKeyboard}
