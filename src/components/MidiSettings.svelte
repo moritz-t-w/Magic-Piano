@@ -147,18 +147,22 @@
         type="button"
         class:recording-on={$recordingOnOff}
         aria-pressed={$recordingOnOff}
-        on:click={() => ($recordingOnOff = !$recordingOnOff)}
-        >Start/Pause</button
+        disabled={$recordingInBuffer && !$recordingOnOff}
+        on:click={() => ($recordingOnOff = !$recordingOnOff)}>Start/Stop</button
       >
-      {#if $recordingInBuffer && !$recordingOnOff}
-        <br />
-        <button type="button" on:click={() => recordingControl("clear")}
-          >Clear
-        </button>
-        <button type="button" on:click={() => recordingControl("export")}
-          >Export
-        </button>
-      {/if}
+      <br />
+      <button
+        type="button"
+        disabled={!$recordingInBuffer || $recordingOnOff}
+        on:click={() => recordingControl("clear")}
+        >Clear
+      </button>
+      <button
+        type="button"
+        disabled={!$recordingInBuffer || $recordingOnOff}
+        on:click={() => recordingControl("export")}
+        >Export
+      </button>
       <p>
         {recordingTime}
       </p>

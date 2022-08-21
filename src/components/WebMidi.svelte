@@ -33,8 +33,8 @@
 
   const startPauseRecording = (onOff) => {
     if (onOff && mediaRecorder) {
-      $recordingInBuffer = true;
       mediaRecorder.start();
+      $recordingInBuffer = true;
       lastRecordingTime = Date.now();
       recordingLengthUpdateInterval = setInterval(() => {
         const now = Date.now();
