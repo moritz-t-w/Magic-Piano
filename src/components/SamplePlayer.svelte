@@ -29,8 +29,10 @@
     userSettings,
   } from "../stores";
   import WebMidi from "./WebMidi.svelte";
+  import AudioRecorder from "./AudioRecorder.svelte";
 
   let webMidi;
+  let audioRecorder;
   let recordingDestination;
 
   let tempoMap;
@@ -367,8 +369,8 @@
   midiSamplePlayer.on("endOfFile", pausePlayback);
 
   const audioRecording = (action) => {
-    if (action === "clear") webMidi.clearRecording();
-    else if (action === "export") webMidi.exportRecording();
+    if (action === "clear") audioRecorder.clearRecording();
+    else if (action === "export") audioRecorder.exportRecording();
   };
 
   /* eslint-disable no-unused-expressions, no-sequences */
@@ -401,6 +403,7 @@
     {stopNote}
     {toggleSustain}
     {toggleSoft}
-    {recordingDestination}
   />
 {/if}
+
+<AudioRecorder bind:this={audioRecorder} {recordingDestination} />
