@@ -31,7 +31,6 @@
     "openseadragon": "^3.0.0",
     "svelte": "^3.42.4",
     "svelte-preprocess": "^4.8.0",
-    "tone": "^14.7.77",
-    "webmidi": "^2.5.3"
+    "tone": "^14.7.77"
   }
 }

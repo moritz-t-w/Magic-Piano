@@ -75,7 +75,7 @@
               midi: event[1],
               time: (parseInt(time, 10) - recordingStartTime) / 1000,
               duration: event[2] / 1000,
-              velocity: event[3], // XXX Make sure these are the correct values
+              velocity: event[3],
             });
             // Controller events don't have durations in the ToneJS MIDI
             // implementation, so we need to add an explicit OFF event
@@ -131,7 +131,12 @@
     if ($recordingOnOff) {
       const now = Date.now();
       if (msgType === "NOTE_ON" && !(entity in heldDown)) {
-        heldDown[entity] = [now, value]; // value should be 0-1
+        // NOTE that these velocity levels have been affected by the
+        // settings in the volume multiplier AND the velocity curves
+        // by the time we see them here. We'd need to handle this
+        // differently if we wanted the MIDI recording to contain
+        // "uninflected" velocities.
+        heldDown[entity] = [now, value];
       } else if (msgType === "NOTE_OFF" && entity in heldDown) {
         const startTime = heldDown[entity][0];
         const duration = now - startTime;
