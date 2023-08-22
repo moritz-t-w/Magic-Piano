@@ -102,6 +102,9 @@
   import RollViewerControls from "./RollViewerControls.svelte";
   import RollViewerScaleBar from "./RollViewerScaleBar.svelte";
 
+  import * as Annotorious from "@recogito/annotorious-openseadragon";
+  import "@recogito/annotorious-openseadragon/dist/annotorious.min.css";
+
   export let imageUrl;
   export let holeData;
   export let holesByTickInterval;
@@ -416,6 +419,9 @@
       navigatorDisplayRegionColor: "transparent",
       animationTime: 0,
     });
+
+    const config = {}; // Optional plugin config options
+    Annotorious(openSeadragon, config);
 
     const { navigator } = openSeadragon;
     ({ viewport } = openSeadragon);
