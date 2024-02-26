@@ -1,7 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import { Midi } from "@tonejs/midi";
-  import { clamp } from "../lib/utils";
+  import { clamp, NoteSource } from "../lib/utils";
   import {
     midiInputs,
     midiOutputs,
@@ -116,7 +116,6 @@
     // expression MIDI files created via the roll image parser and midi2exp
     // toolchain.
     // midi.header.tempos = [{ ticks: 0, bpm: 60 }]; // This can be done
-    // console.log("MIDI PPQ is", midi.header.ppq);
     const clipName = $rollMetadata.DRUID + "-" + new Date().toISOString();
     const midiBlob = new Blob([midi.toArray()], { type: "audio/midi" });
     const midiURL = window.URL.createObjectURL(midiBlob);
