@@ -321,16 +321,16 @@
     $recordingOnOff = !$recordingOnOff;
     if ($recordingInBuffer && !$recordingOnOff) {
       notify({
-        title: "Recording Complete.",
+        title: "Recording in Buffer",
         message: "",
         closable: true,
         actions: [
           {
-            label: "Export MIDI Recording ",
+            label: "Export Recording as MIDI",
             fn: exportRecordingMIDI,
           },
           {
-            label: "Export WAV Recording ",
+            label: "Export Recording as WAV",
             fn: exportRecordingWAV,
           },
           {

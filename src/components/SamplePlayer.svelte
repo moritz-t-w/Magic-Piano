@@ -540,15 +540,13 @@
   };
 </script>
 
-{#if $userSettings.useWebMidi}
-  <WebMidi
-    bind:this={webMidi}
-    {startNote}
-    {stopNote}
-    {toggleSustain}
-    {toggleSoft}
-    {recordingDestination}
-  />
-{/if}
+<WebMidi
+  bind:this={webMidi}
+  {startNote}
+  {stopNote}
+  {toggleSustain}
+  {toggleSoft}
+  {recordingDestination}
+/>
 
 <AudioRecorder bind:this={audioRecorder} {recordingDestination} />
