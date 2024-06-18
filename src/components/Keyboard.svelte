@@ -275,7 +275,6 @@
       </div>
     {/each}
   </div>
-  <KeyboardControls />
 </div>
 
 <svelte:window

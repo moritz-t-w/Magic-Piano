@@ -838,7 +838,7 @@
     openSeadragon = OpenSeadragon({
       id: "roll-viewer",
       showNavigationControl: false,
-      panHorizontal: true,
+      panHorizontal: false,
       visibilityRatio: 1,
       defaultZoomLevel,
       minZoomLevel,
@@ -869,8 +869,7 @@
     navigator.panHorizontal = false;
 
     // Override some styles that OSD sets directly on the elements
-    navigator.element.style.border = "none";
-    navigator.element.parentElement.style.backgroundColor = "#666";
+    navigator.element.style.display = "none";
     Object.assign(osdNavDisplayRegion.style, {
       display: "block",
       border: "none",
@@ -1065,7 +1064,6 @@
 <div
   id="roll-viewer"
   role="presentation"
-  on:mouseenter={() => (showControls = true)}
   on:mouseleave={() => (showControls = false)}
   on:wheel|capture|preventDefault={(event) => {
     if (event.ctrlKey) {

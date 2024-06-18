@@ -351,32 +351,7 @@
   const clearRecording = () => recordingControl(RecordingActions.Clear);
 
   const toggleRecording = () => {
-    $recordingOnOff = !$recordingOnOff;
-    if ($recordingInBuffer && !$recordingOnOff) {
-      notify({
-        title: "Recording paused, ready for export",
-        message: "",
-        closable: true,
-        actions: [
-          {
-            label: "Export as MIDI",
-            fn: exportRecordingMIDI,
-          },
-          {
-            label: "Export as WAV",
-            fn: exportRecordingWAV,
-          },
-          {
-            label: "Clear Recording",
-            fn: clearRecording,
-          },
-          {
-            label: "Keep in Buffer",
-            fn: clearNotification,
-          },
-        ],
-      });
-    }
+    return
   };
 
   const bookmarkRoll = () => {
@@ -482,13 +457,6 @@
     </FlexCollapsible>
     <div id="roll">
       {#if appReady}
-        <RollPlayerControls
-          {skipToTick}
-          {resetPlayback}
-          {playPauseApp}
-          {toggleRecording}
-          {bookmarkRoll}
-        />
         <RollViewer
           bind:this={rollViewer}
           bind:rollImageReady
@@ -498,27 +466,11 @@
           showScaleBar={$appMode === "perform" && $userSettings.showRuler}
         />
       {/if}
-      {#if $userSettings.showKeyboard && $userSettings.overlayKeyboard}
-        <div id="keyboard-overlay" transition:fade>
-          <Keyboard keyCount="88" {startNote} {stopNote} />
-        </div>
-      {/if}
+      <div id="keyboard-overlay" transition:fade>
+        <Keyboard keyCount="88" {startNote} {stopNote} />
+      </div>
     </div>
-    {#if $appMode === "perform"}
-      <FlexCollapsible id="right-sidebar" width="20vw" position="left">
-        {#if appReady}
-          <TabbedPanel {reloadRoll} />
-        {/if}
-      </FlexCollapsible>
-    {/if}
   </div>
-  {#if $userSettings.showKeyboard && !$userSettings.overlayKeyboard}
-    <div id="keyboard-container" transition:slide>
-      <Keyboard keyCount="88" {startNote} {stopNote} />
-    </div>
-  {:else if !$userSettings.showKeyboard}
-    <KeyboardControls outside />
-  {/if}
   <LoadingSpinner showLoadingSpinner={appLoaded && $appWaiting} />
 </div>
 <SamplePlayer
@@ -535,7 +487,6 @@
   {panHorizontal}
   {toggleRecording}
 />
-<KeyboardShortcutEditor />
 <Notification />
 <GameController
   {playPauseApp}
