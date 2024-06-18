@@ -53,7 +53,7 @@
     position: absolute;
     bottom: 0;
     width: calc(100% - var(--navigator-width));
-    opacity: 0.5;
+    opacity: 1;
     // z-index: z($main-context, keyboard-overlay);
   }
 </style>
