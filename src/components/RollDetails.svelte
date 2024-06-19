@@ -201,12 +201,6 @@
       </ul>
     </dd>
   {/if}
-  <dt>PURL</dt>
-  <dd>
-    <a href={metadata.PURL} target="_blank"
-      >{@html metadata.PURL || unavailable}</a
-    >
-  </dd>
   {#if metadata.work}
     <dt>Work</dt>
     <dd class="large">
