@@ -94,18 +94,7 @@
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
-    appearance: none;
-    position: relative;
   }
-
-  select::after{
-    content: "▼";
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-  }
-
   select::selection {
     background-color: var(--cardinal-red-dark);
     color: var(--white);
