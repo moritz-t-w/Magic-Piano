@@ -1,6 +1,6 @@
 <div class="su-brand-bar">
   <div class="su-brand-bar__container">
-    <a class="su-brand-bar__logo">
+    <a class="su-brand-bar__logo stanford">
       Stanford University
       <span class="su-brand-bar__link--a11y"> (link is external)</span>
     </a>
@@ -22,21 +22,25 @@
     padding: 0 0 0 1.5rem;
   }
   .su-brand-bar__logo {
+    text-decoration: none;
+    white-space: nowrap;
+    font-size: 20px;
+    color: var(--white);
+    padding-right: 1.5rem;
+  }
+
+  .stanford {
     font-family: Stanford, SourceSerif4, serif;
     font-style: normal;
     font-weight: 400;
     font-variant: normal;
     text-transform: none;
-    text-decoration: none;
     letter-spacing: 0;
     -ms-font-feature-settings: "liga" 1;
     font-feature-settings: "liga";
     font-variant-ligatures: discretionary-ligatures;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    white-space: nowrap;
-    color: var(--white);
-    font-size: 20px;
   }
   .su-brand-bar__link--a11y {
     border: 0;
