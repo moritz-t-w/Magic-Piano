@@ -70,7 +70,7 @@
     margin-bottom: 1em;
   }
 
-  nav a {
+ /*  nav a {
     background-color: var(--cardinal-red-dark);
     border: none;
     border-radius: 5px;
@@ -85,7 +85,7 @@
   nav a.disabled {
     background-color: var(--black);
     cursor: not-allowed;
-  }
+  } */
 
   select {
     background-color: var(--white);
@@ -94,6 +94,16 @@
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
+    appearance: none;
+    position: relative;
+  }
+
+  select::after{
+    content: "▼";
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
   }
 
   select::selection {
@@ -141,7 +151,7 @@
 
 <dl>
   <nav>
-    {#each Object.entries(neighbors) as [direction, neighbor]}
+    <!-- {#each Object.entries(neighbors) as [direction, neighbor]}
       {#if neighbor}
         <a
           href={`/?druid=${neighbor.druid}`}
@@ -150,7 +160,7 @@
       {:else}
         <a class="disabled">{direction}</a>
       {/if}
-    {/each}
+    {/each} -->
   </nav>
   <dt>Work</dt>
   <dd class="large">
