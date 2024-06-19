@@ -24,7 +24,7 @@
     }
   }
 
-  dd {
+  dd, dd *, dd * * {
     color: var(--black);
     font-family: SourceSans3, sans-serif;
     display: inline;
@@ -81,6 +81,26 @@
     text-align: center;
     text-decoration: none;
   }
+
+  nav a.disabled {
+    background-color: var(--black);
+    cursor: not-allowed;
+  }
+
+  select {
+    background-color: var(--white);
+    border-radius: 5px;
+    border: none;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  select::selection {
+    background-color: var(--cardinal-red-dark);
+    color: var(--white);
+  }
+  
 </style>
 
 <script>
@@ -111,24 +131,35 @@
     qrCode.src = qrCode.alt = url;
   });
 
+  function navigateToDruid(event) {
+    const selectedDruid = event.target.value;
+    if (selectedDruid) {
+      window.location.href = `/?druid=${selectedDruid}`;
+    }
+  }
 </script>
 
 <dl>
   <nav>
     {#each Object.entries(neighbors) as [direction, neighbor]}
       {#if neighbor}
-      <a
-        href={`/?druid=${neighbor.druid}`}
-        >{direction}</a
-      >
+        <a
+          href={`/?druid=${neighbor.druid}`}
+          >{direction}</a
+        >
       {:else}
         <a class="disabled">{direction}</a>
       {/if}
     {/each}
   </nav>
-  <dt>Title</dt>
+  <dt>Work</dt>
   <dd class="large">
-    {@html metadata.title || unavailable}
+    <select on:change={navigateToDruid}>
+      <option value="{metadata.druid}">{metadata.title}</option>
+      {#each catalog as work}
+          <option value={work.druid}>{work.title}</option>
+      {/each}
+    </select>
   </dd>
   {#if metadata.performer}
     <dt>Performer</dt>

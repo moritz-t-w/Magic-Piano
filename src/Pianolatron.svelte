@@ -446,7 +446,7 @@
 
 <div id="app" class={appClass}>
   <div>
-    <FlexCollapsible id="left-sidebar" width="20vw" hidden={false}>
+    <FlexCollapsible id="left-sidebar" width="30vw" hidden={false}>
       {#if $appMode === "perform"}<RollSelector
           bind:currentRoll
           {rollListItems}
