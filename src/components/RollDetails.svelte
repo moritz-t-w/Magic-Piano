@@ -100,6 +100,8 @@
     const offset = direction === "←" ? -1 : 1;
     if (index + offset >= 0 && index + offset < catalog.length)
       neighbors[direction] = catalog[index + offset];
+    else
+      neighbors[direction] = undefined;
   }
 
   const unavailable = "<span>Unavailable</span>";
@@ -114,10 +116,14 @@
 <dl>
   <nav>
     {#each Object.entries(neighbors) as [direction, neighbor]}
+      {#if neighbor}
       <a
         href={`/?druid=${neighbor.druid}`}
         >{direction}</a
       >
+      {:else}
+        <a class="disabled">{direction}</a>
+      {/if}
     {/each}
   </nav>
   <dt>Title</dt>
