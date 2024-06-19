@@ -15,7 +15,7 @@
   }
 
   .listen-app {
-    height: calc(100vh - 220px);
+    height: 100vh;
   }
   .perform-app {
     height: calc(100vh - 170px);
