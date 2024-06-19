@@ -39,7 +39,7 @@
   const pollController = () => {
     [gamepad] = navigator.getGamepads();
 
-    $bassVolumeCoefficient =
+    $bassVolumeCoefficient = $trebleVolumeCoefficient =
       Math.round(
         clamp(
           $bassVolumeCoefficient - gamepad.axes[1] / (100 - $volumeSensitivity),
@@ -47,21 +47,11 @@
           controlsConfig.bassVolume.max,
         ) * 100,
       ) / 100;
-    $trebleVolumeCoefficient =
-      Math.round(
-        clamp(
-          $trebleVolumeCoefficient -
-            gamepad.axes[3] / (100 - $tempoSensitivity),
-          controlsConfig.trebleVolume.min,
-          controlsConfig.trebleVolume.max,
-        ) * 100,
-      ) / 100;
+
     $tempoCoefficient =
       Math.round(
         clamp(
-          $tempoCoefficient +
-            (gamepad.buttons[7].value - gamepad.buttons[6].value) /
-              (100 - $volumeSensitivity),
+          $tempoCoefficient + gamepad.axes[3] / (100 - $tempoSensitivity),
           controlsConfig.tempo.min,
           controlsConfig.tempo.max,
         ) * 100,
