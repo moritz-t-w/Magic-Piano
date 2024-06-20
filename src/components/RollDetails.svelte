@@ -63,7 +63,7 @@
   li a:hover {
     text-decoration: underline;
   }
-  
+
   nav {
     display: flex;
     justify-content: space-between;
@@ -99,7 +99,7 @@
     background-color: var(--cardinal-red-dark);
     color: var(--white);
   }
-  
+
 </style>
 
 <script>
@@ -212,5 +212,5 @@
   <dt>QR Code</dt>
   <dd>
     <img alt="QR Code" />
-  </dd>    
+  </dd>
 </dl>
