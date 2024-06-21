@@ -153,7 +153,7 @@
       {/if}
     {/each} -->
   </nav>
-  <dt>Roll</dt>
+  <dt>Rolle</dt>
   <dd class="large">
     <select on:change={navigateToDruid} value={metadata.druid}>
       {#each catalog as work}
@@ -161,31 +161,31 @@
       {/each}
     </select>
   </dd>
-  <dt>Title</dt>
+  <dt>Titel</dt>
   <dd class="large">
     {@html metadata.title || unavailable}
   </dd>
   {#if metadata.performer}
-    <dt>Performer</dt>
+    <dt>Interpret</dt>
     <dd class="large">
       {@html metadata.performer || unavailable}
     </dd>
   {/if}
-  <dt>Composer</dt>
+  <dt>Komponist</dt>
   <dd class="large">
     {@html metadata.composer || unavailable}
   </dd>
   {#if metadata.arranger}
-    <dt>Arranger</dt>
+    <dt>Arrangeur</dt>
     <dd class="large">
       {@html metadata.arranger || unavailable}
     </dd>
   {/if}
-  <dt>Label</dt>
+  <dt>Beschriftung</dt>
   <dd class="large">
     {@html metadata.label || unavailable}
   </dd>
-  <dt>Publisher</dt>
+  <dt>Verleger</dt>
   <dd class="large">
     {@html metadata.publisher || unavailable}
   </dd>
@@ -204,7 +204,7 @@
     </dd>
   {/if}
   {#if metadata.work}
-    <dt>Work</dt>
+    <dt>Werk</dt>
     <dd class="large">
       {@html metadata.work || unavailable}
     </dd>
