@@ -153,7 +153,7 @@
       {/if}
     {/each} -->
   </nav>
-  <dt>Work</dt>
+  <dt>Roll</dt>
   <dd class="large">
     <select on:change={navigateToDruid} value={metadata.druid}>
       {#each catalog as work}
