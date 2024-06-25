@@ -869,7 +869,8 @@
     navigator.panHorizontal = false;
 
     // Override some styles that OSD sets directly on the elements
-    navigator.element.style.display = "none";
+    navigator.element.style.border = "none";
+    navigator.element.parentElement.style.backgroundColor = "#666";
     Object.assign(osdNavDisplayRegion.style, {
       display: "block",
       border: "none",
