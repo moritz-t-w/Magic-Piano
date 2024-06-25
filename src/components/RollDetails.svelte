@@ -99,6 +99,24 @@
     background-color: var(--cardinal-red-dark);
     color: var(--white);
   }
+  .nav-link {
+	 display: block;
+	 background-color: var(--white);
+	 color: var(--black);
+	 text-decoration: none;
+	 margin: 5px 0;
+	 padding: 10px;
+	 border-radius: 5px;
+  }
+  .nav-link:hover {
+	 text-decoration: none;
+	 background-color: var(--black);
+	 color: var(--white);
+  }
+  .nav-link.active {
+	 background-color: var(--cardinal-red-dark);
+	 color: var(--white);
+  }
 
 #start {
 	position: absolute;
@@ -358,11 +376,15 @@ $push-size: 164px;
   </nav>
   <dt>Rolle</dt>
   <dd class="large">
-    <select on:change={navigateToDruid} value={metadata.druid}>
-      {#each catalog as work}
-          <option value={work.druid}>{work.title}</option>
-      {/each}
-    </select>
+	<ul>
+		{#each catalog as work}
+				<li>
+					<a href={`/?druid=${work.druid}`} class="{work.druid === metadata.druid ? 'active' : ''} nav-link">
+						{@html work.title}
+					</a>
+				</li>
+		{/each}
+	</ul>
   </dd>
   <dt>Titel</dt>
   <dd class="large">
