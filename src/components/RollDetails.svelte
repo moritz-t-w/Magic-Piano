@@ -414,20 +414,6 @@ $push-size: 164px;
   <dd class="large">
     {@html metadata.publisher || unavailable}
   </dd>
-  {#if similarWorksByPerformer.length > 0}
-    <dt>Similar Works By This Performer</dt>
-    <dd class="large">
-      <ul>
-        {#each similarWorksByPerformer as work}
-          <li>
-            <a href={`/?druid=${work.druid}`} target="_blank"
-              >{@html work.title}</a
-            >
-          </li>
-        {/each}
-      </ul>
-    </dd>
-  {/if}
   {#if metadata.work}
     <dt>Werk</dt>
     <dd class="large">
