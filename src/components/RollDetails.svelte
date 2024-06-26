@@ -326,6 +326,7 @@ $push-size: 164px;
 <script>
   import catalog from "../config/catalog.json";
   import QRCode from "qrcode";
+  import { tick as sweep } from "svelte";
 
   const deployment_url = "https://pianolatron-staging.netlify.app";
 
@@ -359,6 +360,13 @@ $push-size: 164px;
       window.location.href = `/?druid=${selectedDruid}`;
     }
   }
+
+  export let playPauseApp;
+
+  const togglePlayPause = async () => {
+    playPauseApp();
+    await sweep();
+  };
 </script>
 
 <dl>
@@ -424,5 +432,6 @@ $push-size: 164px;
   <dd>
     <img alt="QR Code" />
   </dd>
-  <button class="push--skeuo" id="start">Start</button>
+  <button class="push--skeuo" id="start" on:click={togglePlayPause}>
+	 Start
 </dl>

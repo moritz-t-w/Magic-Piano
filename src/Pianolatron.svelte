@@ -18,7 +18,7 @@
     height: calc(100vh - 30px);
   }
   .perform-app {
-    height: calc(100vh - 170px);
+    height: calc(100vh - 30px);
   }
   .embed-app {
     height: 100vh;
@@ -106,6 +106,26 @@
   import LoadingSpinner from "./ui-components/LoadingSpinner.svelte";
   import RollPlayerControls from "./components/RollPlayerControls.svelte";
   import catalog from "./config/catalog.json";
+
+  import {
+    sustainOnOff,
+    softOnOff,
+    sustainFromExternalMidi,
+    softFromExternalMidi,
+  } from "./stores";
+
+  const resetPedals = () => {
+    $sustainOnOff = false;
+    $softOnOff = false;
+  };
+
+  /* eslint-disable no-unused-expressions, no-sequences */
+  $: $sustainFromExternalMidi, resetPedals();
+  $: $softFromExternalMidi, resetPedals();
+
+  $sustainFromExternalMidi = true;
+  $softFromExternalMidi = true;
+
 
   export let mode;
 
@@ -447,10 +467,6 @@
 <div id="app" class={appClass}>
   <div>
     <FlexCollapsible id="left-sidebar" width="30vw" hidden={false}>
-      {#if $appMode === "perform"}<RollSelector
-          bind:currentRoll
-          {rollListItems}
-        />{/if}
       {#if appReady}
         <RollDetails {metadata} />
         {#if !$holesIntervalTree.count}
