@@ -34,9 +34,9 @@ done
 
 echo "Port $port is now open"
 
-# Run electron
+# Run electron with additional arguments
 echo "Starting Electron..."
-electron "http://localhost:$port" &
+electron "http://localhost:$port" "$@" &
 electron_pid=$!
 
 # Wait for electron to exit
