@@ -15,7 +15,8 @@
     "lint": "astro check && prettier --check . && eslint src/ --ext svelte --ext js",
     "start": "electron-forge start",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "electron-forge make",
+	 "electron-dev": "yarn dev & yarn electron http://localhost:8080"
   },
   "devDependencies": {
     "@astrojs/svelte": "^4.0.2",
