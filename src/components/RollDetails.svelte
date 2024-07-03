@@ -434,4 +434,5 @@ $push-size: 164px;
   </dd>
   <button class="push--skeuo" id="start" on:click={togglePlayPause}>
 	 Start
+	</button>
 </dl>
