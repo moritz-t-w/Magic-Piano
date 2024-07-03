@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if command -v yarnpkg >/dev/null 2>&1; then
+	alias yarn=yarnpkg
+fi
+
 RETRY_INTERVAL=1
 
 # Function to check if a port is in use
