@@ -16,7 +16,7 @@
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
-	 "electron-dev": "yarn dev & yarn electron http://localhost:8080"
+	 "electron-dev": "./electron-dev.sh"
   },
   "devDependencies": {
     "@astrojs/svelte": "^4.0.2",
