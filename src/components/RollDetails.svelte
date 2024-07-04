@@ -177,13 +177,6 @@
     qrCode.alt = url;
   });
 
-  function navigateToDruid(event) {
-    const selectedDruid = event.target.value;
-    if (selectedDruid) {
-      window.location.href = `/?druid=${selectedDruid}`;
-    }
-  }
-
   export let playPauseApp;
 
   const togglePlayPause = async () => {
