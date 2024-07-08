@@ -6,6 +6,8 @@ app.whenReady().then(() => {
 	const win = new BrowserWindow({
 		title: "Main window",
 		fullscreen: true,
+		width: 1920,
+		height: 1080,
 	});
 
 	// You can use `process.env.VITE_DEV_SERVER_URL` when the vite command is called `serve`
