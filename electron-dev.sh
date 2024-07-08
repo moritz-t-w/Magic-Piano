@@ -40,7 +40,8 @@ echo "Port $port is now open"
 
 # Run electron with additional arguments
 echo "Starting Electron..."
-yarn electron -- "http://localhost:$port" "$@" &
+export VITE_DEV_SERVER_URL=http://localhost:$port
+yarn electron . -- "$@" &
 electron_pid=$!
 
 # Wait for electron to exit

@@ -15,7 +15,7 @@ app.whenReady().then(() => {
 		win.loadURL(process.env.VITE_DEV_SERVER_URL);
 		win.webContents.openDevTools();
 	} else {
-		// Load your file
-		win.loadFile("dist/index.html");
+		console.log("No VITE_DEV_SERVER_URL found");
+		win.loadURL('http://localhost:8080');
 	}
 });
