@@ -150,6 +150,7 @@
   import catalog from "../config/catalog.json";
   import QRCode from "qrcode";
   import { tick as sweep } from "svelte";
+  import { isPlaying } from "../stores";
 
   const deployment_url = "https://pianolatron-staging.netlify.app";
 
@@ -250,9 +251,9 @@
 		<img alt="QR Code" />
 	</dd>
 	<div id="button-container">
-		<button id="start" on:click={togglePlayPause}>
-		Start
-		</button>
+    <button id="start" on:click={togglePlayPause}>
+      {$isPlaying ? "Pause" : "Play"}
+    </button>
 	</div>
   </div>
 </dl>

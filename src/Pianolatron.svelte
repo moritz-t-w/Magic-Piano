@@ -468,7 +468,7 @@
   <div>
     <FlexCollapsible id="left-sidebar" width="30vw" hidden={false}>
       {#if appReady}
-        <RollDetails {metadata} />
+        <RollDetails {metadata} {playPauseApp} />
         {#if !$holesIntervalTree.count}
           <p>
             Note:<br />Hole visualization data is not available for this roll at
