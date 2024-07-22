@@ -13,7 +13,7 @@ app.whenReady().then(() => {
 	// You can use `process.env.VITE_DEV_SERVER_URL` when the vite command is called `serve`
 	if (process.env.VITE_DEV_SERVER_URL) {
 		win.loadURL(process.env.VITE_DEV_SERVER_URL);
-		win.webContents.openDevTools();
+		// win.webContents.openDevTools();
 	} else {
 		console.log("No VITE_DEV_SERVER_URL found");
 		win.loadURL('http://localhost:8080');
