@@ -1,9 +1,5 @@
 #!/bin/bash
 
-if command -v yarnpkg >/dev/null 2>&1; then
-	alias yarn=yarnpkg
-fi
-
 RETRY_INTERVAL=1
 
 # Function to check if a port is in use
@@ -21,7 +17,7 @@ done
 echo "Predicted port: $port"
 
 # Run yarn dev in the background
-yarn dev &
+yarnpkg dev &
 yarn_pid=$!
 
 # Function to check if the port is open
@@ -41,7 +37,7 @@ echo "Port $port is now open"
 # Run electron with additional arguments
 echo "Starting Electron..."
 export VITE_DEV_SERVER_URL=http://localhost:$port
-yarn electron . -- "$@" &
+yarnpkg electron . -- "$@" &
 electron_pid=$!
 
 # Wait for electron to exit
