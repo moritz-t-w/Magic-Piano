@@ -35,6 +35,8 @@ done
 echo "Port $port is now open"
 
 # Run electron with additional arguments
+echo "Waiting, just to be sure..."
+sleep 5
 echo "Starting Electron..."
 export VITE_DEV_SERVER_URL=http://localhost:$port
 yarnpkg electron . -- "$@" &
