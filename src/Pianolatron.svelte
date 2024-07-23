@@ -15,10 +15,10 @@
   }
 
   .listen-app {
-    height: calc(100vh - 30px);
+    height: calc(100vh - 35px);
   }
   .perform-app {
-    height: calc(100vh - 30px);
+    height: calc(100vh - 35px);
   }
   .embed-app {
     height: 100vh;
