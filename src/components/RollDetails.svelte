@@ -152,8 +152,7 @@
   import { tick as sweep } from "svelte";
   import { isPlaying } from "../stores";
 
-  const deployment_url = "https://pianolatron-staging.netlify.app";
-  const attachDruid = true;
+  import { qr } from "../../config.json";
 
   export let metadata;
   export const similarWorksByPerformer = catalog.filter(
@@ -172,7 +171,7 @@
 
   const unavailable = "<span>Unavailable</span>";
 
-  const url = `${deployment_url}${attachDruid ? `/?druid=${metadata.druid}` : ''}`
+  const url = `${qr.url}${qr.attachDruid ? `/?druid=${metadata.druid}` : ''}`
   QRCode.toDataURL(url).then((dataUrl) => {
     const qrCode = document.querySelector("img");
     qrCode.src = dataUrl;
@@ -246,15 +245,19 @@
       {@html metadata.work || unavailable}
     </dd>
   {/if}
+  {#if qr.showTitle}
   <dt>QR Code</dt>
+  {:else}
+  <br>
+  {/if}
   <div id="qrcode-and-button-container">
-	<dd>
-		<img alt="QR Code" />
-	</dd>
-	<div id="button-container">
+    <dd>
+      <img alt="QR Code" />
+    </dd>
+    <div id="button-container">
     <button id="start" on:click={togglePlayPause}>
       {$isPlaying ? "Pause" : "Play"}
     </button>
-	</div>
-  </div>
+    </div>
+</div>
 </dl>
