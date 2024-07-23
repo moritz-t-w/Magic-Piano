@@ -153,7 +153,7 @@
   import { isPlaying } from "../stores";
 
   const deployment_url = "https://pianolatron-staging.netlify.app";
-  const attach_druid = true;
+  const attachDruid = true;
 
   export let metadata;
   export const similarWorksByPerformer = catalog.filter(
@@ -172,7 +172,7 @@
 
   const unavailable = "<span>Unavailable</span>";
 
-  const url = `${deployment_url}${attach_druid ? `/?druid=${metadata.druid}` : ''}`
+  const url = `${deployment_url}${attachDruid ? `/?druid=${metadata.druid}` : ''}`
   QRCode.toDataURL(url).then((dataUrl) => {
     const qrCode = document.querySelector("img");
     qrCode.src = dataUrl;
