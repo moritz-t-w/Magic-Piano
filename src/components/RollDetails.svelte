@@ -186,7 +186,7 @@
   };
 </script>
 
-<dl>
+<dl style="height: 100%;">
   <nav>
     <!-- {#each Object.entries(neighbors) as [direction, neighbor]}
       {#if neighbor}
