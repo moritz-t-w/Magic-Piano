@@ -135,3 +135,7 @@ export const media = watchMedia({
 // Latency warnings
 export const latencyDetected = createStore(false);
 export const showLatencyWarning = createStore(true);
+
+
+// Debugging
+export const showSettings = writable(false);

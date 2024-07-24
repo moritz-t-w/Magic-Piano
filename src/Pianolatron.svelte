@@ -114,6 +114,23 @@
     softFromExternalMidi,
   } from "./stores";
 
+  import { showSettings } from './stores';
+
+  function handleKeydown(event) {
+    if (event.ctrlKey && event.key === ',') {
+      event.preventDefault();
+      showSettings.update(value => !value);
+    }
+    // ... other existing key handlers
+  }
+
+  onMount(() => {
+    window.addEventListener('keydown', handleKeydown);
+    return () => {
+      window.removeEventListener('keydown', handleKeydown);
+    };
+  });
+
   const resetPedals = () => {
     $sustainOnOff = false;
     $softOnOff = false;
@@ -491,6 +508,14 @@
       <div id="keyboard-overlay" transition:fade>
         <Keyboard keyCount="88" {startNote} {stopNote} />
       </div>
+      {#if $showSettings}
+        <FlexCollapsible id="right-sidebar" width="20vw" position="left">
+          {#if appReady}
+            <TabbedPanel {reloadRoll} />
+          {/if}
+        </FlexCollapsible>
+      {/if}
+
     </div>
   </div>
   <LoadingSpinner showLoadingSpinner={appLoaded && $appWaiting} />
