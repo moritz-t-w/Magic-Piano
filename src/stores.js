@@ -120,7 +120,7 @@ export const userSettings = createPersistedStore("userSettings", {
   highlightEnabledHoles: false,
   showKeyboard: true,
   overlayKeyboard: false,
-  useWebMidi: false,
+  useWebMidi: true,
   showRuler: false,
 });
 
