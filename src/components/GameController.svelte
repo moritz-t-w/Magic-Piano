@@ -59,7 +59,6 @@
 
     // For Play/Pause and Stop buttons, only trigger the function calls
     //  if they were previously up at the last state update and are now down
-    if (buttonToggledOn(0, lastControllerState, gamepad)) playPauseApp();
     if (buttonPressed(gamepad.buttons[2])) adjustZoom("zoomIn");
     if (buttonPressed(gamepad.buttons[3])) adjustZoom("zoomOut");
 
