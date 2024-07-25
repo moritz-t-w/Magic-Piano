@@ -46,7 +46,7 @@
     $bassVolumeCoefficient = $trebleVolumeCoefficient =
       Math.round(
         clamp(
-          $bassVolumeCoefficient - absoluteSigned(gamepad.axes[3]) / (100 - $tempoSensitivity),
+          $bassVolumeCoefficient - absoluteSigned(gamepad.axes[1]) / (100 - $tempoSensitivity),
           controlsConfig.bassVolume.min,
           controlsConfig.bassVolume.max,
         ) * 100,
