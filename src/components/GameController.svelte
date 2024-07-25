@@ -15,7 +15,6 @@
   } from "../stores";
 
   export let playPauseApp;
-  export let stopApp;
   export let updateTickByViewportIncrement;
   export let panHorizontal;
   export let adjustZoom;
@@ -61,7 +60,6 @@
     // For Play/Pause and Stop buttons, only trigger the function calls
     //  if they were previously up at the last state update and are now down
     if (buttonToggledOn(0, lastControllerState, gamepad)) playPauseApp();
-    if (buttonToggledOn(1, lastControllerState, gamepad)) stopApp();
     if (buttonPressed(gamepad.buttons[2])) adjustZoom("zoomIn");
     if (buttonPressed(gamepad.buttons[3])) adjustZoom("zoomOut");
 
