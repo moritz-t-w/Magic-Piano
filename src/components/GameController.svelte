@@ -39,18 +39,20 @@
   const pollController = () => {
     [gamepad] = navigator.getGamepads();
 
-    function absoluteSigned(value) {
-      return value === 0 ? 0 : Math.abs(value) * Math.sign(value);
-    }
-
     $bassVolumeCoefficient = clamp(
-      absoluteSigned(gamepad.axes[1]) / (100),
+      (gamepad.axes[1] + 1) / 2,
       controlsConfig.bassVolume.min,
       controlsConfig.bassVolume.max,
     );
 
+    $trebleVolumeCoefficient = clamp(
+        (gamepad.axes[3] + 1) / 2,
+        controlsConfig.trebleVolume.min,
+        controlsConfig.trebleVolume.max,
+    );
+
     $tempoCoefficient = clamp(
-      absoluteSigned(gamepad.axes[3]) / (100),
+      (gamepad.axes[3] + 1) / 2,
       controlsConfig.tempo.min,
       controlsConfig.tempo.max,
     );
