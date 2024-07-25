@@ -43,23 +43,17 @@
       return value === 0 ? 0 : Math.abs(value) * Math.sign(value);
     }
 
-    $bassVolumeCoefficient = $trebleVolumeCoefficient =
-      Math.round(
-        clamp(
-          $bassVolumeCoefficient - absoluteSigned(gamepad.axes[1]) / (100 - $tempoSensitivity),
-          controlsConfig.bassVolume.min,
-          controlsConfig.bassVolume.max,
-        ) * 100,
-      ) / 100;
+    $bassVolumeCoefficient = clamp(
+      absoluteSigned(gamepad.axes[1]) / (100),
+      controlsConfig.bassVolume.min,
+      controlsConfig.bassVolume.max,
+    );
 
-    $tempoCoefficient =
-      Math.round(
-        clamp(
-          $tempoCoefficient + absoluteSigned(gamepad.axes[3]) / (100 - $tempoSensitivity),
-          controlsConfig.tempo.min,
-          controlsConfig.tempo.max,
-        ) * 100,
-      ) / 100;
+    $tempoCoefficient = clamp(
+      absoluteSigned(gamepad.axes[3]) / (100),
+      controlsConfig.tempo.min,
+      controlsConfig.tempo.max,
+    );
 
     // For Play/Pause and Stop buttons, only trigger the function calls
     //  if they were previously up at the last state update and are now down
