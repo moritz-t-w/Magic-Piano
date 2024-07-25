@@ -6,6 +6,7 @@
     bassVolumeCoefficient,
     trebleVolumeCoefficient,
     tempoCoefficient,
+    volumeCoefficient,
     softOnOff,
     sustainOnOff,
     accentOnOff,
@@ -43,18 +44,11 @@
       return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
     }
 
-    $bassVolumeCoefficient = mapRange(
+    $volumeCoefficient = mapRange(
       gamepad.axes[1],
       -1, 1,
       controlsConfig.bassVolume.min,
       controlsConfig.bassVolume.max
-    );
-
-    $trebleVolumeCoefficient = mapRange(
-      gamepad.axes[1],
-      -1, 1,
-      controlsConfig.trebleVolume.min,
-      controlsConfig.trebleVolume.max
     );
 
     $tempoCoefficient = mapRange(
