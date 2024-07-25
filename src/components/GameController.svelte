@@ -39,22 +39,29 @@
   const pollController = () => {
     [gamepad] = navigator.getGamepads();
 
-    $bassVolumeCoefficient = clamp(
-      (gamepad.axes[1] + 1) / 2,
+    function mapRange(value, inMin, inMax, outMin, outMax) {
+      return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+    }
+
+    $bassVolumeCoefficient = mapRange(
+      gamepad.axes[1],
+      -1, 1,
       controlsConfig.bassVolume.min,
-      controlsConfig.bassVolume.max,
+      controlsConfig.bassVolume.max
     );
 
-    $trebleVolumeCoefficient = clamp(
-        (gamepad.axes[3] + 1) / 2,
-        controlsConfig.trebleVolume.min,
-        controlsConfig.trebleVolume.max,
+    $trebleVolumeCoefficient = mapRange(
+      gamepad.axes[3],
+      -1, 1,
+      controlsConfig.trebleVolume.min,
+      controlsConfig.trebleVolume.max
     );
 
-    $tempoCoefficient = clamp(
-      (gamepad.axes[3] + 1) / 2,
+    $tempoCoefficient = mapRange(
+      gamepad.axes[3],
+      -1, 1,
       controlsConfig.tempo.min,
-      controlsConfig.tempo.max,
+      controlsConfig.tempo.max
     );
 
     // For Play/Pause and Stop buttons, only trigger the function calls
