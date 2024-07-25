@@ -40,24 +40,22 @@
     [gamepad] = navigator.getGamepads();
 
     function mapRange(value, inMin, inMax, outMin, outMid, outMax) {
-      // Determine which output extreme is further from outMid
+      // Determine the largest distance from outMid
       const distToMin = Math.abs(outMid - outMin);
       const distToMax = Math.abs(outMax - outMid);
+      const largestDistance = Math.max(distToMin, distToMax);
 
-      let rangeMin, rangeMax;
-      if (distToMin > distToMax) {
-        rangeMin = outMin;
-        rangeMax = outMid + (outMid - outMin);
-      } else {
-        rangeMin = outMid - (outMax - outMid);
-        rangeMax = outMax;
-      }
+      // Calculate the total range
+      const totalRange = largestDistance * 2;
 
       // Map the input value to the new range
-      const mappedValue = (value - inMin) * (rangeMax - rangeMin) / (inMax - inMin) + rangeMin;
+      const mappedValue = (value - inMin) * totalRange / (inMax - inMin) - largestDistance;
 
-      // Clamp the output to [outMin, outMax]
-      return Math.max(outMin, Math.min(outMax, mappedValue));
+      // Adjust the mapped value based on outMid
+      const adjustedValue = mappedValue + outMid;
+
+      // Clamp the result between outMin and outMax
+      return Math.min(Math.max(adjustedValue, outMin), outMax);
     }
 
     $volumeCoefficient = mapRange(
