@@ -39,14 +39,27 @@
   const pollController = () => {
     [gamepad] = navigator.getGamepads();
 
-    function mapRange(value, inMin, inMax, outMin, outMax) {
-      return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+    function mapRange(value, inMin, inMax, outMin, outMid, outMax) {
+      // Normalize the input value to a range of 0 to 1
+      let normalizedValue = (value - inMin) / (inMax - inMin);
+
+      // Determine which half of the output range we're in
+      if (normalizedValue <= 0.5) {
+        // Map to the lower half (outMin to outMid)
+        let lowerHalfRange = Math.abs(outMid - outMin);
+        return outMin + normalizedValue * 2 * lowerHalfRange;
+      } else {
+        // Map to the upper half (outMid to outMax)
+        let upperHalfRange = Math.abs(outMax - outMid);
+        return outMid + (normalizedValue - 0.5) * 2 * upperHalfRange;
+      }
     }
 
     $volumeCoefficient = mapRange(
       gamepad.axes[1],
       -1, 1,
       controlsConfig.bassVolume.min,
+		1,
       controlsConfig.bassVolume.max
     );
 
@@ -54,6 +67,7 @@
       gamepad.axes[3],
       -1, 1,
       controlsConfig.tempo.min,
+		1,
       controlsConfig.tempo.max
     );
 
