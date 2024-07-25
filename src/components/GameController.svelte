@@ -51,7 +51,7 @@
     );
 
     $trebleVolumeCoefficient = mapRange(
-      gamepad.axes[3],
+      gamepad.axes[1],
       -1, 1,
       controlsConfig.trebleVolume.min,
       controlsConfig.trebleVolume.max
