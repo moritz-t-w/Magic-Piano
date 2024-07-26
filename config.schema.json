@@ -1,0 +1,80 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"type": "object",
+	"properties": {
+		"qr": {
+			"type": "object",
+			"properties": {
+				"url": {
+					"type": "string",
+					"format": "uri",
+					"description": "The URL to be encoded in the QR code"
+				},
+				"attachDruid": {
+					"type": "boolean",
+					"description": "If true, add druid url param with current druid"
+				},
+				"showTitle": {
+					"type": "boolean",
+					"description": "If true, show 'QR Code:' above the QR code"
+				}
+			},
+			"required": [
+				"url",
+				"attachDruid",
+				"showTitle"
+			]
+		},
+		"sustain": {
+			"type": "object",
+			"properties": {
+				"userSustainTimeout": {
+					"type": "number",
+					"description": "Seconds to wait before taking back control over the sustain pedal"
+				}
+			},
+			"required": [
+				"userSustainTimeout"
+			]
+		},
+		"sliders": {
+			"type": "object",
+			"properties": {
+				"inputBounds": {
+					"type": "object",
+					"properties": {
+						"min": {
+							"type": "number",
+							"description": "Minimum value for slider input"
+						},
+						"max": {
+							"type": "number",
+							"description": "Maximum value for slider input"
+						}
+					},
+					"required": [
+						"min",
+						"max"
+					]
+				},
+				"mode": {
+					"type": "string",
+					"enum": [
+						"linearClamped",
+						"proportional"
+					],
+					"description": "Mode of operation for the sliders. linearClamped: linear mapping of input to output, if one of the output bounds is closer to the midpoint than the other, the closer one's value is clamped. proportional: if one of the output bounds is closer to the midpoint than the other, the closer one takes less travel from the midpoint to reach."
+				}
+			},
+			"required": [
+				"inputBounds",
+				"mode"
+			]
+		}
+	},
+	"required": [
+		"qr",
+		"sustain",
+		"sliders"
+	]
+}
