@@ -6,5 +6,12 @@
 	},
 	"sustain": {
 		"userSustainTimeout": 20
+	},
+	"sliders": {
+		"inputBounds": {
+			"min": -1,
+			"max": 1
+		},
+		"mode": "linearClamped"
 	}
 }

@@ -14,7 +14,7 @@
     volumeSensitivity,
     tempoSensitivity,
   } from "../stores";
-  import { sustain } from "../../config.json";
+  import { sustain, sliders } from "../../config.json";
 
   export let playPauseApp;
   export let updateTickByViewportIncrement;
@@ -42,38 +42,54 @@
   const pollController = () => {
     [gamepad] = navigator.getGamepads();
 
-    function mapRange(value, inMin, inMax, outMin, outMid, outMax) {
-      // Determine the largest distance from outMid
-      const distToMin = Math.abs(outMid - outMin);
-      const distToMax = Math.abs(outMax - outMid);
-      const largestDistance = Math.max(distToMin, distToMax);
+    function mapRange(value, outMin, outMid, outMax) {
+      const { min: inMin, max: inMax } = sliders.inputBounds;
 
-      // Calculate the total range
-      const totalRange = largestDistance * 2;
+      if (sliders.mode === "linearClamped") {
+        // Determine the largest distance from outMid
+        const distToMin = Math.abs(outMid - outMin);
+        const distToMax = Math.abs(outMax - outMid);
+        const largestDistance = Math.max(distToMin, distToMax);
 
-      // Map the input value to the new range
-      const mappedValue = (value - inMin) * totalRange / (inMax - inMin) - largestDistance;
+        // Calculate the total range
+        const totalRange = largestDistance * 2;
 
-      // Adjust the mapped value based on outMid
-      const adjustedValue = mappedValue + outMid;
+        // Map the input value to the new range
+        const mappedValue = (value - inMin) * totalRange / (inMax - inMin) - largestDistance;
 
-      // Clamp the result between outMin and outMax
-      return Math.min(Math.max(adjustedValue, outMin), outMax);
+        // Adjust the mapped value based on outMid
+        const adjustedValue = mappedValue + outMid;
+
+        // Clamp the result between outMin and outMax
+        return Math.min(Math.max(adjustedValue, outMin), outMax);
+      } else {
+        // Normalize the input value to a range of 0 to 1
+        let normalizedValue = (value - inMin) / (inMax - inMin);
+
+        // Determine which half of the output range we're in
+        if (normalizedValue <= 0.5) {
+          // Map to the lower half (outMin to outMid)
+          let lowerHalfRange = Math.abs(outMid - outMin);
+          return outMin + normalizedValue * 2 * lowerHalfRange;
+        } else {
+          // Map to the upper half (outMid to outMax)
+          let upperHalfRange = Math.abs(outMax - outMid);
+          return outMid + (normalizedValue - 0.5) * 2 * upperHalfRange;
+        }
+      }
     }
 
     $volumeCoefficient = mapRange(
       gamepad.axes[1],
-      -1, 1,
       controlsConfig.bassVolume.min,
-		1,
+      1,
       controlsConfig.bassVolume.max
     );
 
     $tempoCoefficient = mapRange(
       gamepad.axes[3],
-      -1, 1,
       controlsConfig.tempo.min,
-		1,
+      1,
       controlsConfig.tempo.max
     );
 
