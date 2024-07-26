@@ -14,5 +14,13 @@
 			"max": 1
 		},
 		"mode": "linearClamped"
-	}
+	},
+	"rolls": [
+		"gp583km0927",
+		"kh288bx3828",
+		"cn498vz4750",
+		"jy320zw1102",
+		"jw822wm2644",
+		"jx095ty1753"
+	]
 }

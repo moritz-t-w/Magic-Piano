@@ -106,6 +106,7 @@
   import LoadingSpinner from "./ui-components/LoadingSpinner.svelte";
   import RollPlayerControls from "./components/RollPlayerControls.svelte";
   import catalog from "./config/catalog.json";
+  import { rolls } from "../config.json";
 
   import {
     sustainOnOff,
@@ -190,8 +191,9 @@
   // here, as it won't update the ref.
   const skipToPercentage = (percentage = 0) =>
     skipToTick(progressPercentageToTick(percentage));
-
-  const rollListItems = catalog.map((item) => ({
+    const rollListItems = catalog.filter(
+    (item) => rolls.includes(item.druid),
+  ).map((item) => ({
     ...item,
     _label: `${item.number} ${item.title} [${item.publisher}]`,
   }));

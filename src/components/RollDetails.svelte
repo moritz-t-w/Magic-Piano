@@ -152,19 +152,24 @@
   import { tick as sweep } from "svelte";
   import { isPlaying } from "../stores";
 
-  import { qr } from "../../config.json";
+  import { qr, rolls } from "../../config.json";
+
+
+  export let rollListItems = catalog.filter(
+    (item) => rolls.includes(item.druid),
+  );
 
   export let metadata;
-  export const similarWorksByPerformer = catalog.filter(
+  export const similarWorksByPerformer = rollListItems.filter(
     (w) => w.performer === metadata.performer && w.druid !== metadata.druid,
   );
 
-  const index = catalog.findIndex((w) => w.druid === metadata.druid);
+  const index = rollListItems.findIndex((w) => w.druid === metadata.druid);
   export const neighbors = {};
   for (const direction of ["←", "→"]) {
     const offset = direction === "←" ? -1 : 1;
-    if (index + offset >= 0 && index + offset < catalog.length)
-      neighbors[direction] = catalog[index + offset];
+    if (index + offset >= 0 && index + offset < rollListItems.length)
+      neighbors[direction] = rollListItems[index + offset];
     else
       neighbors[direction] = undefined;
   }
@@ -202,7 +207,7 @@
   <dt>Rolle</dt>
   <dd class="large">
 	<ul>
-		{#each catalog as work}
+		{#each rollListItems as work}
 				<li>
 					<a href={`/?druid=${work.druid}`} class="{work.druid === metadata.druid ? 'active' : ''} nav-link">
 						{@html work.title}
