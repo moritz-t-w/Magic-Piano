@@ -2,7 +2,7 @@
 	"$schema": "./config.schema.json",
 	"qr": {
 		"url": "https://pianolatron.stanford.edu",
-		"attachDruid": false,
+		"attachDruid": true,
 		"showTitle": false
 	},
 	"sustain": {
