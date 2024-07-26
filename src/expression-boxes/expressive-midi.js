@@ -8,6 +8,7 @@ import {
   sustainOnOff,
   tempoCoefficient,
   useMidiTempoEventsOnOff,
+  userSustain,
 } from "../stores";
 
 export default class ExpressiveMidiExpressionizer {
@@ -146,7 +147,14 @@ export default class ExpressiveMidiExpressionizer {
       }
     } else if (name === "Controller Change" && get(rollPedalingOnOff)) {
       if (number === this.midiSustPedal) {
-        sustainOnOff.set(!!value);
+        let message = "Sustain pedal "
+        if (get(userSustain)) {
+          message += "blocked"
+        } else {
+          sustainOnOff.set(!!value);
+          message += "toggled"
+        }
+        console.log(message)
       } else if (number === this.midiSoftPedal) {
         softOnOff.set(!!value);
       }

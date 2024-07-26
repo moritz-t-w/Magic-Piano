@@ -45,6 +45,10 @@ export const sustainOnOff = createStore(false);
 export const accentOnOff = createStore(false);
 export const sustainFromExternalMidi = createStore(false);
 export const softFromExternalMidi = createStore(false);
+export const userSustain = createStore(false);
+userSustain.subscribe((value) => {
+  console.trace("userSustain", value);
+});
 
 // Playback Settings
 export const volumeCoefficient = createStore(1);

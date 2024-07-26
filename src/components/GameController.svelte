@@ -9,10 +9,12 @@
     volumeCoefficient,
     softOnOff,
     sustainOnOff,
+    userSustain,
     accentOnOff,
     volumeSensitivity,
     tempoSensitivity,
   } from "../stores";
+  import { sustain } from "../../config.json";
 
   export let playPauseApp;
   export let updateTickByViewportIncrement;
@@ -23,6 +25,7 @@
   let controllerLoop = null;
   let lastControllerState = null;
   let gamepad = null;
+  let sustainTimeout = null;
 
   const buttonPressed = (b) => (typeof b === "object" ? b.pressed : b === 1.0);
 
@@ -82,8 +85,18 @@
     if (buttonToggled(4, lastControllerState, gamepad))
       $softOnOff = buttonPressed(gamepad.buttons[4]);
 
-    if (buttonToggled(5, lastControllerState, gamepad))
+    if (buttonToggled(5, lastControllerState, gamepad) || buttonPressed(gamepad.buttons[5])) {
       $sustainOnOff = buttonPressed(gamepad.buttons[5]);
+
+      userSustain.set(true);
+      if ($sustainOnOff) {
+        clearTimeout(sustainTimeout);
+      } else {
+        sustainTimeout = setTimeout(() => {
+          userSustain.set(false);
+        }, sustain.userSustainTimeout * 1000);
+      }
+    }
 
     if (buttonPressed(gamepad.buttons[8])) adjustZoom("resetZoom");
     if (buttonPressed(gamepad.buttons[9])) bookmarkRoll();

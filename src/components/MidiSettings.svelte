@@ -39,11 +39,13 @@
     softOnOff,
     sustainFromExternalMidi,
     softFromExternalMidi,
+    userSustain,
   } from "../stores";
 
   const resetPedals = () => {
     $sustainOnOff = false;
     $softOnOff = false;
+    $userSustain = false;
   };
 
   /* eslint-disable no-unused-expressions, no-sequences */

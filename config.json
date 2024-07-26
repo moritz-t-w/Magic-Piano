@@ -3,5 +3,8 @@
 		"url": "https://pianolatron.stanford.edu",
 		"attachDruid": false,
 		"showTitle": false
+	},
+	"sustain": {
+		"userSustainTimeout": 20
 	}
 }

@@ -12,6 +12,7 @@ import {
   tempoCoefficient,
   trebleExpCurve,
   useMidiTempoEventsOnOff,
+  userSustain,
 } from "../../stores";
 import { NoteSource } from "../../lib/utils";
 import { rollProfile } from "../../config/roll-config";
@@ -402,7 +403,7 @@ export default class InAppExpressionizer {
           this.startNote(midiNumber, noteVelocity, NoteSource.Midi);
           activeNotes.add(midiNumber);
         }
-      } else if (holeType === "pedal" && get(rollPedalingOnOff)) {
+      } else if (holeType === "pedal" && get(rollPedalingOnOff) && !(get(userSustain) && this.ctrlMap[midiNumber].startsWith("sust"))) {
         this.handlePedal(velocity, midiNumber);
       }
     } else if (msgType === "Set Tempo" && get(useMidiTempoEventsOnOff)) {

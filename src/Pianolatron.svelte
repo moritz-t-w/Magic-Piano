@@ -109,6 +109,7 @@
 
   import {
     sustainOnOff,
+    userSustain,
     softOnOff,
     sustainFromExternalMidi,
     softFromExternalMidi,
@@ -134,6 +135,7 @@
   const resetPedals = () => {
     $sustainOnOff = false;
     $softOnOff = false;
+    $userSustain = false;
   };
 
   /* eslint-disable no-unused-expressions, no-sequences */
@@ -208,6 +210,7 @@
       pausePlayback();
     } else {
       startPlayback();
+      userSustain.set(false);
     }
   };
 
