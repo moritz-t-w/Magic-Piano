@@ -192,10 +192,10 @@
     mark.style.setProperty("--highlight-color", `hsl(${holeColor})`);
     mark.classList.add(holeType);
 
-    mark.addEventListener("mouseout", () => {
+    /* mark.addEventListener("mouseout", () => {
       if (!marks.map(([_hole]) => _hole).includes(hole))
         viewport.viewer.removeOverlay(hoveredMark);
-    });
+    }); */
 
     const imgBounds = viewport.viewportToImageRectangle(viewport.getBounds());
     const markFractionalPosition =
@@ -613,11 +613,11 @@
       rect.setAttribute("height", height + padding * 2);
       rect.setAttribute("rx", 10);
       rect.setAttribute("ry", 10);
-      rect.addEventListener("mouseover", () => {
+/*       rect.addEventListener("mouseover", () => {
         if (marks.map(([_hole]) => _hole).includes(hole)) return;
         viewport.viewer.removeOverlay(hoveredMark);
         hoveredMark = createMark(hole);
-      });
+      }); */
       rect.setAttribute("fill", `hsla(${holeColor}, 0.8)`);
       rect.setAttribute("class", holeType);
       g.appendChild(rect);

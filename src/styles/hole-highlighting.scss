@@ -9,7 +9,7 @@ $highlight-hover-outline-offset: 4px;
     background-color: transparent;
 
     // mouseover hole outline and label flag
-    &:hover {
+    /* &:hover {
       box-shadow: none;
       outline: $highlight-hover-outline-width solid
         $highlight-hover-outline-color;
@@ -38,7 +38,7 @@ $highlight-hover-outline-offset: 4px;
         top: -($highlight-hover-outline-offset + $highlight-hover-outline-width);
         transform: none;
       }
-    }
+    } */
   }
 
   // .active marks are currently playing -- the ::before pseudo element overlays the highlight color
@@ -58,13 +58,13 @@ $highlight-hover-outline-offset: 4px;
   }
 
   // .flag-left marks have their label "flag" pointing to the left
-  mark.flag-left:hover::after {
+/*   mark.flag-left:hover::after {
     left: auto;
     right: calc(
       100% + #{$highlight-hover-outline-offset} + #{$highlight-hover-outline-width}
     );
     padding: 8px 4px 8px ($highlight-hover-outline-width + 4px);
-  }
+  } */
 
   // if "Display Note Velocities" is on, a tooltip is displayed on .active marks
   &.active-note-details {
@@ -85,7 +85,7 @@ $highlight-hover-outline-offset: 4px;
     }
 
     // when hovering a mark, revert to the outline+flag style
-    mark:hover::after {
+    /* mark:hover::after {
       left: calc(
         100% + #{$highlight-hover-outline-offset} + #{$highlight-hover-outline-width}
       );
@@ -101,7 +101,7 @@ $highlight-hover-outline-offset: 4px;
         100% + #{$highlight-hover-outline-offset} + #{$highlight-hover-outline-width}
       );
       padding: 8px 4px 8px ($highlight-hover-outline-width + 4px);
-    }
+    } */
   }
 
   // when "Highlight All Holes" is on, force a yellow highlight
@@ -121,9 +121,9 @@ $highlight-hover-outline-offset: 4px;
   // if "Display Note Velocities" is on...
   &.show-note-velocities {
     // ...label "flags" for note marks use the data-note-velocity value too
-    mark.note:hover::after {
+   /*  mark.note:hover::after {
       content: attr(data-hole-label) "\av:" attr(data-note-velocity);
-    }
+    } */
 
     // ...and if "Show Details for Active Notes" is also on...
     &.active-note-details {
@@ -141,9 +141,9 @@ $highlight-hover-outline-offset: 4px;
       }
 
       // ...and so is the label
-      mark.note:hover::after {
+      /* mark.note:hover::after {
         content: attr(data-hole-label) "\av:64";
-      }
+      } */
 
       // ...and if "Show Details for Active Notes" is also on...
       &.active-note-details {
