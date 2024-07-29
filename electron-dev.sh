@@ -16,9 +16,6 @@ done
 
 echo "Predicted port: $port"
 
-echo "Starting midi player..."
-jalv http://drobilla.net/plugins/mda/Piano &
-
 # Run yarn dev in the background
 yarnpkg dev &
 yarn_pid=$!
