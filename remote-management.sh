@@ -36,3 +36,6 @@ echo "Launching vmpk..."
 $ssh_command "vmpk" &
 
 echo "Applications launched. Check your X11 display for the GUI windows."
+
+sleep 4
+ssh -p $SSH_PORT $SSH_USER@$SSH_HOST
