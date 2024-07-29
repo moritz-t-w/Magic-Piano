@@ -21,7 +21,7 @@ if ! command_exists ssh; then
 fi
 
 # SSH command with X11 forwarding
-ssh_command="ssh -X -p $SSH_PORT $SSH_USER@$SSH_HOST"
+ssh_command="ssh -Y -p $SSH_PORT $SSH_USER@$SSH_HOST"
 
 # Launch qpwgraph
 echo "Launching qpwgraph..."
