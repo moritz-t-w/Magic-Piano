@@ -70,11 +70,25 @@
 				"inputBounds",
 				"mode"
 			]
+		},
+		"rolls": {
+			"type": "array",
+			"items": {
+				"type": "string",
+				"description": "DRUID of the roll to be played. DRUIDs can be found in catalog.json",
+				"format": "druid",
+				"minLength": 11,
+				"maxLength": 11,
+				"pattern": "^[a-z0-9]{11}$"
+			},
+			"minItems": 1,
+			"uniqueItems": true
 		}
 	},
 	"required": [
 		"qr",
 		"sustain",
-		"sliders"
+		"sliders",
+		"rolls"
 	]
 }
