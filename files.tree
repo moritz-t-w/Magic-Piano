@@ -1,0 +1,56 @@
+├── config.json // Konfiguration von unklaren oder veränderten Kundenwünschen
+├── config.schema.json // JSON Schema für Editor tooltips & autocomplete von config.json
+│
+├── astro.config.mjs // Konfiguration des Servers
+├── forge.config.js // config für electron builder (electron-forge)
+├── svelte.config.js // svelte config
+│
+├── electron-dev.sh // run-script für app server und client sowie midi sampler
+├── full_screen.sh // falls fullscreen nicht out-of-the-box funktioniert
+├── remote-management.sh // script, das auf die Station zugreifft und remote konfigurationsfenster auf dem host öffnet
+│
+├── dist // gebuildete files
+│   └── ...
+├── dist-electron // gebuildete electron setup scripts
+│   ├── main.js
+│   └── preload.mjs
+│
+├── public // accessible durch browse
+│   ├── json // rollen metadaten, nach druid
+│   │   └── zy618kz1670.json
+│   ├── loader.svg
+│   ├── midi // rollen midi dateien, nach druid
+│   │   └── zy618kz1670.mid
+│   └── samples // samples für den built in midi sampler, wird in der Station nicht verwendet.
+│       └── ...
+│
+├── README.md // outdated
+│
+└── src
+    ├── config
+    │   ├── catalog.json // Katalog mit allen verfügbaren Rollen. Welche abgespielt werden können, wird in config.json festgelegt.
+    ├── images
+    │   └── gamepad_mappings.png // aktuelle controller mappings (habe das Bild entsprechend angepasst)
+    │
+    ├── components // svelte components der UI, sowie scripts
+    │   ├── RollDetails.svelte // linke sidebar, zeigt rollen metadaten
+    │   ├── GameController.svelte // Controller input handler
+    │   │
+    │   ├── RollViewer.svelte // rollen anzeige mithilfe von openseadragon
+    │   └── WebMidi.svelte // midi handler
+    ├── layouts
+    │   └── stanfordHeader.astro // header mit stanford logo
+    │
+    ├── Pianolatron.svelte // Hauptkomponente, die alle anderen Komponenten rendert, sowie eigenens html und css enthält
+    │
+    ├── stores.js // app-weite svelte stores
+    │
+    ├── electron
+    │   ├── main.ts // electron app entry point
+    │   └── preload.ts // leeres preload script, muss für electron app vorhanden sein
+    │
+    └── expression-boxes // midi handlers
+        ├── expressive-midi.js // verwendeter midi handler
+        └── lib
+            └── pedaling.js // pedaling handler
+
