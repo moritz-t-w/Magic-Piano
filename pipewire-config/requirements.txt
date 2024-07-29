@@ -1,0 +1,2 @@
+-i https://pypi.org/simple
+pipewire-python==0.2.3; python_version >= '3.7'
