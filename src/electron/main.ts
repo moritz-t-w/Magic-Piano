@@ -2,7 +2,7 @@
 import * as url from "url";
 import { app, BrowserWindow } from "electron";
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
 	const win = new BrowserWindow({
 		title: "Main window",
 		fullscreen: true,
@@ -16,6 +16,18 @@ app.whenReady().then(() => {
 		// win.webContents.openDevTools();
 	} else {
 		console.log("No VITE_DEV_SERVER_URL found");
-		win.loadURL('http://localhost:8000');
+		let loaded = false;
+		while (!loaded) {
+			console.log("Trying to load http://localhost:8000");
+			try {
+				await win.loadURL('http://localhost:8000');
+				loaded = true;
+				console.log("Loaded");
+			} catch (error) {
+				console.error(error);
+				console.log("Retrying...");
+				await new Promise((resolve) => setTimeout(resolve, 5000));
+			}
+		}
 	}
 });
