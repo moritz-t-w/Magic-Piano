@@ -16,6 +16,6 @@ app.whenReady().then(() => {
 		// win.webContents.openDevTools();
 	} else {
 		console.log("No VITE_DEV_SERVER_URL found");
-		win.loadURL('http://localhost:8080');
+		win.loadURL('http://localhost:8000');
 	}
 });
