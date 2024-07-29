@@ -510,15 +510,16 @@
           showScaleBar={$appMode === "perform" && $userSettings.showRuler}
         />
       {/if}
-      <div id="keyboard-overlay" transition:fade>
-        <Keyboard keyCount="88" {startNote} {stopNote} />
-      </div>
       {#if $showSettings}
         <FlexCollapsible id="right-sidebar" width="20vw" position="left">
           {#if appReady}
             <TabbedPanel {reloadRoll} />
           {/if}
         </FlexCollapsible>
+      {:else}
+        <div id="keyboard-overlay" transition:fade>
+          <Keyboard keyCount="88" {startNote} {stopNote} />
+        </div>
       {/if}
 
     </div>
