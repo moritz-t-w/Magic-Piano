@@ -82,6 +82,7 @@
   const pianoReady = piano.load();
 
   recordingDestination = piano.context.createMediaStreamDestination();
+  recordingDestination.mute = true;
   piano.connect(recordingDestination);
 
   const setTempo = (tempo) => {
