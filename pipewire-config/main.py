@@ -57,3 +57,5 @@ midi_bridge_out = find_port(outputs, "Port-0", "Midi-Bridge")
 scarlett_midi_in = find_port(inputs, "Scarlett 4i4 4th Gen MIDI", "Midi-Bridge")
 
 connect(midi_bridge_out, scarlett_midi_in)
+
+exit(0)
