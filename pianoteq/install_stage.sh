@@ -20,7 +20,7 @@ fi
 
 # Install dependencies
 apt-get update
-apt-get install -y p7zip-full wget liboss4-salsa-asound2 libx11-6
+apt-get install -y p7zip-full wget liboss4-salsa-asound2
 
 # Download icon
 wget -O pianoteq_icon_128.png "https://www.pianoteq.com/images/logo/pianoteq_icon_128.png"
