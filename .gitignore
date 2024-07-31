@@ -7,3 +7,5 @@ build
 out/
 dist-electron/
 .env
+
+pipewire-config/log.txt
